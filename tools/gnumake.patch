@@ -1,0 +1,93 @@
+From ilya Tue Aug 22 18:51:27 1995
+Subject: Patch for make
+To: rommel@Informatik.TU-Muenchen.DE (Kai-Uwe Rommel)
+Date: Tue, 22 Aug 1995 18:51:27 -0400 (EDT)
+X-Mailer: ELM [version 2.4 PL24]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Length: 1872      
+Status: RO
+
+Hi,
+
+it was making dirty tricks with environ.
+
+*** job.c~	Mon Jun 12 20:45:24 1995
+--- job.c	Tue Aug 22 15:36:28 1995
+***************
+*** 1214,1222 ****
+    child_access ();
+  
+    /* Run the program.  */
+-   environ = envp;
+  #ifdef __EMX__
+!   if ((pid = spawnvp(P_NOWAIT, argv[0], argv)) != -1)
+      errno = 0;
+    else if (errno == ENOENT)
+    { /* try as a batch file */
+--- 1214,1221 ----
+    child_access ();
+  
+    /* Run the program.  */
+  #ifdef __EMX__
+!   if ((pid = spawnvpe(P_NOWAIT, argv[0], argv, envp)) != -1)
+      errno = 0;
+    else if (errno == ENOENT)
+    { /* try as a batch file */
+***************
+*** 1224,1235 ****
+      strcat(new_cmd, (_osmode == OS2_MODE) ? ".cmd" : ".bat");
+      old_cmd = argv[0];
+      argv[0] = new_cmd;
+!     if ((pid = spawnvp(P_NOWAIT, argv[0], argv)) != -1)
+        errno = 0;
+      else if (errno == ENOENT)
+        argv[0] = old_cmd;
+    }
+  #else
+    execvp (argv[0], argv);
+  #endif
+    
+--- 1223,1235 ----
+      strcat(new_cmd, (_osmode == OS2_MODE) ? ".cmd" : ".bat");
+      old_cmd = argv[0];
+      argv[0] = new_cmd;
+!     if ((pid = spawnvpe(P_NOWAIT, argv[0], argv, envp)) != -1)
+        errno = 0;
+      else if (errno == ENOENT)
+        argv[0] = old_cmd;
+    }
+  #else
++   environ = envp;
+    execvp (argv[0], argv);
+  #endif
+    
+***************
+*** 1276,1284 ****
+	  }
+  
+  #ifdef __EMX__
+!	pid = spawnvp(P_NOWAIT, shell, new_argv);
+	if (pid == -1)
+!	  perror_with_name ("spawnvp: ", shell);
+  #else
+	execvp (shell, new_argv);
+	if (errno == ENOENT)
+--- 1276,1284 ----
+	  }
+  
+  #ifdef __EMX__
+!	pid = spawnvpe(P_NOWAIT, shell, new_argv, envp);
+	if (pid == -1)
+!	  perror_with_name ("spawnvpe: ", shell);
+  #else
+	execvp (shell, new_argv);
+	if (errno == ENOENT)
+
+
+By the way, is there any way to debug this? gdb segfaults on watches and
+displays including environ. Do you think it is a feature?
+
+Ilya
+

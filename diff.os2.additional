@@ -1,0 +1,550 @@
+diff -cr ..\perl5os2.patch\perl5.001m.andy/hints/os2.sh ./hints/os2.sh
+*** ../perl5os2.patch/perl5.001m.andy/hints/os2.sh	Mon Oct 09 21:49:06 1995
+--- ./hints/os2.sh	Mon Oct 09 16:35:32 1995
+***************
+*** 0 ****
+--- 1,185 ----
++ # Problems:
++ # a) warning from fcntl: Third argument is int in emx - patched
++ # b) gr_password is not a structure in struct group - patched
++ # c) (gone)
++ # d) Makefile needs sh before ./makedir
++ # e) (gone)
++ # f) (gone)
++ # g) (gone)
++ # h) (gone)
++ # i) (gone)
++ # j) the rule true in Makefile should become sh -c true
++ # k) Cwd does not work. ===> the extensions cannot be compiled - patched
++ # l) TEST expects to get -e 'perl' - patched
++ # m) (gone)
++ 
++ # Tests failing with .o compile (this is probably obsolete, but now it is .obj):
++ 
++ # comp/cpp (because of sed above)
++ # io/fs.t : (patched) 2..5 7..11 18 (why 11?)
++ # io/inplace.t ???? (ak works)
++ # io/tell.t 10 ????
++ # op/exec.t 1 ???? 4 ????
++ # op/glob.t 1 (bug in sh)
++ # op/magic.t 4 1/2 (????) adding sleep 5 does not help
++ # op/readdir.t 3 (same bug in ksh)
++ # op/stat.t 3 4 9 10 20 >34
++ 
++ # Newer results with .obj without i/o optimization, fail:
++ 
++ # io/fs.t	: 2+
++ # io/pipe.t	: 1+
++ # io/tell.t	: 8, 10
++ # op/exec.t	: 4, 6 (ok 1 comes as "ok \1")
++ # op/fork.t	: 1+
++ # op/misc.t	: 9
++ # op/pack.t	: 8
++ # op/stat.t	: 3 4 9 10 20 >34
++ # lib/sdbm.t	: sdbm store returned -1, errno 0, key "21" at lib/sdbm.t line 112.
++ # lib/posix.t	: coredump on 3
++ 
++ # If compiled with i/o optimization, then 15% speedup on input, and
++ # io/tell.t	: 11 only
++ # no coredump in posix.t
++ 
++ 
++ # Note that during the .obj compile you need to move the perl.dll file
++ # to LIBPATH :-(
++ 
++ #osname="OS/2"
++ sysman=`../UU/loc . /man/man1 /usr/man/man1 c:/man/man1 c:/usr/man/man1`
++ cc='gcc'
++ usrinc='/emx/include'
++ libpth='/emx/lib/st /emx/lib'
++ 
++ so='dll'
++ 
++ # Additional definitions:
++ 
++ d_shrplib='define'
++ firstmakefile='GNUmakefile'
++ obj_ext='obj'
++ lib_ext='lib'
++ ar='emxomfar'
++ plibext='lib'
++ exe_ext='.exe'
++ archobjs="os2.$obj_ext"
++ cldlibs=''
++ 
++ libc="/emx/lib/st/c_import.$lib_ext"
++ 
++ # otherwise puts -lc ???
++ 
++ libs='-lsocket -lm'
++ 
++ # Run files without extension with sh - feature of patched ksh
++ NOHASHBANG=sh
++ 
++ cccdlflags='-Zdll'
++ dlsrc='dl_os2.xs'
++ lddlflags='-Zdll -Zomf -Zcrtdll'
++ ldflags='-Zexe -Zomf -Zcrtdll'
++ ld='gcc'
++ usedl='define'
++ ccflags='-Zomf -DDOSISH -DOS2=2 -DEMBED -I.'
++ cppflags='-DDOSISH -DOS2=2 -DEMBED -I.'
++ 
++ # This variables taken from recommended config.sh
++ alignbytes='8'
++ 
++ d_fork='undef'
++ 
++ # for speedup: (some patches to ungetc are also needed):
++ # Note that without this guy tests 8 and 10 of io/tell.t fail, with it 11 fails
++ 
++ d_stdstdio='define'
++ d_stdiobase='define'
++ d_stdio_ptr_lval='define'
++ d_stdio_cnt_lval='define'
++ stdio_ptr='((fp)->ptr)'
++ stdio_cnt='((fp)->rcount)'
++ stdio_base='((fp)->buffer)'
++ stdio_bufsiz='((fp)->rcount + (fp)->ptr - (fp)->buffer)'
++ 
++ 
++ # I do not have these:
++ #dynamic_ext='Fcntl GDBM_File SDBM_File POSIX Socket UPM REXXCALL'
++ dynamic_ext='Fcntl POSIX Socket SDBM_File'
++ #extensions='Fcntl GDBM_File SDBM_File POSIX Socket UPM REXXCALL'
++ extensions='Fcntl SDBM_File POSIX Socket'
++ 
++ # Unknown reasons for:
++ #cpio='cpio'
++ #csh=''
++ #date=''
++ #byacc=''
++ #d_charsprf='undef'
++ #d_drem='undef'
++ #d_fmod='define'
++ #d_linuxstd='undef'
++ #d_socket='define'
++ #gcc='gcc'
++ #gidtype='gid_t'
++ #glibpth='c:/usr/lib/emx h:/emx/lib /emx/lib'
++ #groupstype='gid_t'
++ #h_fcntl='true'
++ #i_time='define'
++ #line=''
++ #lseektype='off_t'
++ #man1ext='1'
++ #man3ext='3'
++ #modetype='mode_t'
++ #more='more'
++ #mv='mv'
++ #sleep='sleep'
++ #socketlib='-lsocket'
++ #ssizetype='ssize_t'
++ #tar='tar'
++ #timetype='time_t'
++ #uidtype='uid_t'
++ #uname=''
++ #uniq=''
++ #xlibpth=''
++ #yacc='yacc'
++ #yaccflags=''
++ #zcat='zcat'
++ #orderlib='false'
++ #pg='pg'
++ #pr='pr'
++ #ranlib=':'
++ 
++ # Misfound by configure:
++ 
++ #gcc='gcc'
++ #more='more'
++ #mv='mv'
++ #pr='pr'
++ #sleep='sleep'
++ #tar='tar'
++ 
++ xlibpth=''
++ 
++ # I cannot stand it, but did not test with:
++ # d_dirnamlen='undef'
++ 
++ # I try to do without these:
++ 
++ #d_pwage='undef'
++ #d_pwcomment='undef'
++ 
++ ln='cp'
++ lns='cp'
++ 
++ # ????
++ #mallocobj=''
++ #mallocsrc=''
++ #usemymalloc='false'
++ 
++ nm_opt='-p'
++ 
++ # The next two are commented. pdksh handles #!
++ # sharpbang='extproc '
++ # shsharp='false'
++ 
++ # Commented:
++ #startsh='extproc ksh\\n#! sh'
+diff -cr ..\perl5os2.patch\perl5.001m.andy/os2/Makefile.SH ./os2/Makefile.SH
+*** ../perl5os2.patch/perl5.001m.andy/os2/Makefile.SH	Mon Oct 09 21:49:06 1995
+--- ./os2/Makefile.SH	Fri Sep 29 23:12:40 1995
+***************
+*** 0 ****
+--- 1,54 ----
++ # This file is read by Makefile.SH to produce rules for $(perllib)
++ # We insert perl5.def since I do not know how to generate it yet.
++ 
++ $spitshell >>Makefile <<'!NO!SUBS!'
++ $(perllib): perl.imp perl.dll perl5.def
++ 	emximp -o $(perllib) perl.imp
++ 
++ perl.imp: perl5.def
++ 	emximp -o perl.imp perl5.def
++ 
++ perl.dll: $(obj) perl5.def perl.$(O)
++ 	$(LD) $(LDDLFLAGS) -o $@ perl.$(O) $(obj) -lsocket perl5.def
++ 
++ perl5.def: perl.linkexp
++ 	echo "LIBRARY 'Perl' INITINSTANCE TERMINSTANCE"	> $@
++ 	echo DESCRIPTION "'Perl interpreter, export autogenerated'"	>>$@
++ 	echo STACKSIZE 32768				>>$@
++ 	echo CODE LOADONCALL				>>$@
++ 	echo DATA LOADONCALL NONSHARED MULTIPLE		>>$@
++ 	echo EXPORTS					>>$@
++ 	echo '  "ctermid"'				>>$@
++ 	echo '  "ttyname"'				>>$@
++ 	cat perl.linkexp	>>$@
++ 
++ #	grep -v '"\(malloc\|realloc\|free\)"' perl.linkexp	>>$@
++ 
++ 
++ # We assume here that perl is available somewhere ...
++ 
++ perl.exports: perl.exp EXTERN.h perl.h
++ 	(echo '#include "EXTERN.h"'; echo '#include "perl.h"' ; \
++ 			echo '#include "perl.exp"') | \
++ 		$(CC) -DEMBED  -E - | \
++ 		awk '{if ($$2 == "") print $$1}' | sort | uniq > $@
++ 
++ #		perl -ne 'print if (/^#!/ .. /^#\s/) && s/^(\w+) *$$/$$1/' > $@
++ 
++ perl.linkexp: perl.exports perl.map
++ 	cat perl.exports perl.map | sort | uniq -d | sed -e 's/\w\+/  "\0"/' > perl.linkexp
++ 
++ perl.map: $(obj) perl.$(O) miniperlmain.$(O)
++ 	$(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o dummy.exe miniperlmain.$(O) perl.$(O) $(obj) -lsocket -lm -Zmap -Zlinker /map
++ 	awk '{if ($$3 == "") print $$2}' <dummy.map | sort | uniq > perl.map
++ 	rm dummy.exe dummy.map
++ 
++ depend: os2ish.h
++ 
++ os2.c: os2/os2.c os2ish.h
++ 	cp $< $@
++ 
++ os2ish.h: os2/os2ish.h
++ 	cp $< $@
++ 
++ !NO!SUBS!
+diff -cr ..\perl5os2.patch\perl5.001m.andy/os2/os2.c ./os2/os2.c
+*** ../perl5os2.patch/perl5.001m.andy/os2/os2.c	Mon Oct 09 21:49:06 1995
+--- ./os2/os2.c	Thu Sep 28 00:00:30 1995
+***************
+*** 0 ****
+--- 1,215 ----
++ #define INCL_DOS
++ #define INCL_NOPM
++ #include <os2.h>
++ 
++ /*
++  * Various Unix compatibility functions for OS/2
++  */
++ 
++ #include <stdio.h>
++ #include <errno.h>
++ #include <limits.h>
++ #include <process.h>
++ 
++ #include "EXTERN.h"
++ #include "perl.h"
++ 
++ /*****************************************************************************/
++ /* priorities */
++ 
++ int setpriority(int which, int pid, int val)
++ {
++   return DosSetPriority((pid < 0) ? PRTYS_PROCESSTREE : PRTYS_PROCESS,
++ 			val >> 8, val & 0xFF, abs(pid));
++ }
++ 
++ int getpriority(int which /* ignored */, int pid)
++ {
++   TIB *tib;
++   PIB *pib;
++   DosGetInfoBlocks(&tib, &pib);
++   return tib->tib_ptib2->tib2_ulpri;
++ }
++ 
++ /*****************************************************************************/
++ /* spawn */
++ 
++ static int
++ result(int flag, int pid)
++ {
++ 	int r, status;
++ 	Signal_t (*ihand)();     /* place to save signal during system() */
++ 	Signal_t (*qhand)();     /* place to save signal during system() */
++ 
++ 	if (pid < 0 || flag != 0)
++ 		return pid;
++ 
++ 	ihand = signal(SIGINT, SIG_IGN);
++ 	qhand = signal(SIGQUIT, SIG_IGN);
++ 	r = waitpid(pid, &status, 0);
++ 	signal(SIGINT, ihand);
++ 	signal(SIGQUIT, qhand);
++ 
++ 	statusvalue = (U16)status;
++ 	if (r < 0)
++ 		return -1;
++ 	return status & 0xFFFF;
++ }
++ 
++ int
++ do_aspawn(really,mark,sp)
++ SV *really;
++ register SV **mark;
++ register SV **sp;
++ {
++     register char **a;
++     char *tmps;
++     int rc;
++     int flag = P_WAIT, trueflag;
++ 
++     if (sp > mark) {
++ 	New(401,Argv, sp - mark + 1, char*);
++ 	a = Argv;
++ 
++ 	if (mark < sp && SvIOKp(*(mark+1))) {
++ 		++mark;
++ 		flag = SvIVx(*mark);
++ 	}
++ 
++ 	while (++mark <= sp) {
++ 	    if (*mark)
++ 		*a++ = SvPVx(*mark, na);
++ 	    else
++ 		*a++ = "";
++ 	}
++ 	*a = Nullch;
++ 
++ 	trueflag = flag;
++ 	if (flag == P_WAIT)
++ 		flag = P_NOWAIT;
++ 
++ 	if (really && *(tmps = SvPV(really, na)))
++ 	    rc = result(trueflag, spawnvp(flag,tmps,Argv));
++ 	else
++ 	    rc = result(trueflag, spawnvp(flag,Argv[0],Argv));
++ 
++ 	if (rc < 0 && dowarn)
++ 	    warn("Can't spawn \"%s\": %s", Argv[0], Strerror(errno));
++     } else
++     	rc = -1;
++     do_execfree();
++     return rc;
++ }
++ 
++ int
++ do_spawn(cmd)
++ char *cmd;
++ {
++     register char **a;
++     register char *s;
++     char flags[10];
++     char *shell, *copt;
++     int rc;
++ 
++     if ((shell = getenv("SHELL")) != NULL)
++     	copt = "-c";
++     else if ((shell = getenv("COMSPEC")) != NULL)
++     	copt = "/C";
++     else
++     	shell = "cmd.exe";
++ 
++     /* save an extra exec if possible */
++     /* see if there are shell metacharacters in it */
++ 
++     /*SUPPRESS 530*/
++     if (*cmd == '@') {
++     	++cmd;
++     	goto shell_cmd;
++     }
++     for (s = cmd; *s; s++) {
++ 	if (*s != ' ' && !isALPHA(*s) && strchr("%&|<>\n",*s)) {
++ 	    if (*s == '\n' && !s[1]) {
++ 		*s = '\0';
++ 		break;
++ 	    }
++ shell_cmd:  return result(P_WAIT, spawnl(P_NOWAIT,shell,shell,copt,cmd,(char*)0));
++ 	}
++     }
++     New(402,Argv, (s - cmd) / 2 + 2, char*);
++     Cmd = savepvn(cmd, s-cmd);
++     a = Argv;
++     for (s = Cmd; *s;) {
++ 	while (*s && isSPACE(*s)) s++;
++ 	if (*s)
++ 	    *(a++) = s;
++ 	while (*s && !isSPACE(*s)) s++;
++ 	if (*s)
++ 	    *s++ = '\0';
++     }
++     *a = Nullch;
++     if (Argv[0]) {
++ 	rc = result(P_WAIT, spawnvp(P_NOWAIT,Argv[0],Argv));
++ 	if (rc < 0 && dowarn)
++ 	    warn("Can't spawn \"%s\": %s", Argv[0], Strerror(errno));
++     } else
++     	rc = -1;
++     do_execfree();
++     return rc;
++ }
++ 
++ /*****************************************************************************/
++ 
++ #ifndef FORK
++ int
++ fork(void)
++ {
++     die(no_func, "Unsupported function fork");
++     errno = EINVAL;
++     return -1;
++ }
++ #endif
++ 
++ /*****************************************************************************/
++ /* not implemented in EMX 0.9a */
++ 
++ void *	ctermid(x)	{ return 0; }
++ void *	ttyname(x)	{ return 0; }
++ 
++ void *	gethostent()	{ return 0; }
++ void *	getnetent()	{ return 0; }
++ void *	getprotoent()	{ return 0; }
++ void *	getservent()	{ return 0; }
++ void	sethostent(x)	{}
++ void	setnetent(x)	{}
++ void	setprotoent(x)	{}
++ void	setservent(x)	{}
++ void	endhostent(x)	{}
++ void	endnetent(x)	{}
++ void	endprotoent(x)	{}
++ void	endservent(x)	{}
++ 
++ /*****************************************************************************/
++ /* stat() hack for char/block device */
++ 
++ #if OS2_STAT_HACK
++ 
++     /* First attempt used DosQueryFSAttach which crashed the system when
++        used with 5.001. Now just look for /dev/. */
++ 
++ int
++ os2_stat(char *name, struct stat *st)
++ {
++     static int ino = SHRT_MAX;
++ 
++     if (stricmp(name, "/dev/con") != 0
++      && stricmp(name, "/dev/tty") != 0)
++ 	return stat(name, st);
++ 
++     memset(st, 0, sizeof *st);
++     st->st_mode = S_IFCHR|0666;
++     st->st_ino = (ino-- & 0x7FFF);
++     st->st_nlink = 1;
++     return 0;
++ }
++ 
++ #endif
+diff -cr ..\perl5os2.patch\perl5.001m.andy/os2/os2ish.h ./os2/os2ish.h
+*** ../perl5os2.patch/perl5.001m.andy/os2/os2ish.h	Mon Oct 09 21:49:06 1995
+--- ./os2/os2ish.h	Tue Oct 03 01:08:48 1995
+***************
+*** 0 ****
+--- 1,72 ----
++ #include <signal.h>
++ 
++ /* HAS_IOCTL:
++  *	This symbol, if defined, indicates that the ioctl() routine is
++  *	available to set I/O characteristics
++  */
++ #define	HAS_IOCTL		/**/
++  
++ /* HAS_UTIME:
++  *	This symbol, if defined, indicates that the routine utime() is
++  *	available to update the access and modification times of files.
++  */
++ #define HAS_UTIME		/**/
++ 
++ #define HAS_KILL
++ #define HAS_WAIT
++ 
++ #ifndef SIGABRT
++ #    define SIGABRT SIGILL
++ #endif
++ #ifndef SIGILL
++ #    define SIGILL 6         /* blech */
++ #endif
++ #define ABORT() kill(getpid(),SIGABRT);
++ 
++ /*
++  * fwrite1() should be a routine with the same calling sequence as fwrite(),
++  * but which outputs all of the bytes requested as a single stream (unlike
++  * fwrite() itself, which on some systems outputs several distinct records
++  * if the number_of_items parameter is >1).
++  */
++ #define fwrite1 fwrite
++ 
++ #define my_getenv(var) getenv(var)
++ 
++ /*****************************************************************************/
++ 
++ #include <stdlib.h>	/* before the following definitions */
++ #include <unistd.h>	/* before the following definitions */
++ 
++ #define chdir	_chdir2
++ #define getcwd	_getcwd2
++ 
++ /* This guy is needed for quick stdstd  */
++ 
++ #if defined(USE_STDIO_PTR) && defined(STDIO_PTR_LVALUE) && defined(STDIO_CNT_LVALUE)
++ #  define _filbuf _fill
++ 	/* Perl uses ungetc only with successful return */
++ #  define ungetc(c,fp) \
++ 	(FILE_ptr(fp) > FILE_base(fp) && c == (int)*(FILE_ptr(fp) - 1) \
++ 	 ? (--FILE_ptr(fp), ++FILE_cnt(fp), (int)c) : ungetc(c,fp))
++ #endif
++ 
++ #define OP_BINARY O_BINARY
++ 
++ #define OS2_STAT_HACK 1
++ #if OS2_STAT_HACK
++ 
++ #define Stat(fname,bufptr) os2_stat((fname),(bufptr))
++ #define Fstat(fd,bufptr)   fstat((fd),(bufptr))
++ 
++ #undef S_IFBLK
++ #undef S_ISBLK
++ #define S_IFBLK		0120000
++ #define S_ISBLK(mode)	(((mode) & S_IFMT) == S_IFBLK)
++ 
++ #else
++ 
++ #define Stat(fname,bufptr) stat((fname),(bufptr))
++ #define Fstat(fd,bufptr)   fstat((fd),(bufptr))
++ 
++ #endif

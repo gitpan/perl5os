@@ -1,0 +1,356 @@
+diff -cr ..\perl5os2.patch\perl5.001m.andy/ext/POSIX/POSIX.xs ./ext/POSIX/POSIX.xs
+*** ../perl5os2.patch/perl5.001m.andy/ext/POSIX/POSIX.xs	Tue May 23 11:54:26 1995
+--- ./ext/POSIX/POSIX.xs	Thu Sep 28 00:00:16 1995
+***************
+*** 81,86 ****
+--- 81,90 ----
+  /* Possibly needed prototypes */
+  char *cuserid _((char *));
+  
++ #ifndef HAS_MKFIFO
++ #define mkfifo(a,b) not_here("mkfifo")
++ #endif
++ 
+  #ifndef HAS_CUSERID
+  #define cuserid(a) (char *) not_here("cuserid")
+  #endif
+diff -cr ..\perl5os2.patch\perl5.001m.andy/miniperlmain.c ./miniperlmain.c
+*** ../perl5os2.patch/perl5.001m.andy/miniperlmain.c	Mon Feb 13 18:48:50 1995
+--- ./miniperlmain.c	Thu Sep 28 00:00:28 1995
+***************
+*** 16,21 ****
+--- 16,26 ----
+  {
+      int exitstatus;
+  
++ #ifdef OS2
++     _response(&argc, &argv);
++     _wildcard(&argc, &argv);
++ #endif
++ 
+  #ifdef VMS
+      getredirection(&argc,&argv);
+  #endif
+diff -cr ..\perl5os2.patch\perl5.001m.andy/perl.c ./perl.c
+*** ../perl5os2.patch/perl5.001m.andy/perl.c	Wed Jun 07 08:58:26 1995
+--- ./perl.c	Thu Sep 28 00:00:30 1995
+***************
+*** 1001,1010 ****
+  #ifdef MSDOS
+  	fputs("MS-DOS port Copyright (c) 1989, 1990, Diomidis Spinellis\n",
+  	stdout);
+  #ifdef OS2
+!         fputs("OS/2 port Copyright (c) 1990, 1991, Raymond Chen, Kai Uwe Rommel\n",
+          stdout);
+- #endif
+  #endif
+  #ifdef atarist
+          fputs("atariST series port, ++jrb  bammi@cadence.com\n", stdout);
+--- 1001,1011 ----
+  #ifdef MSDOS
+  	fputs("MS-DOS port Copyright (c) 1989, 1990, Diomidis Spinellis\n",
+  	stdout);
++ #endif
+  #ifdef OS2
+!         fputs("OS/2 port Copyright (c) 1990, 1991, Raymond Chen, Kai Uwe Rommel\n"
+!         	"Version 5 port Copyright (c) 1994-1995, Andreas Kaiser\n",
+          stdout);
+  #endif
+  #ifdef atarist
+          fputs("atariST series port, ++jrb  bammi@cadence.com\n", stdout);
+diff -cr ..\perl5os2.patch\perl5.001m.andy/perl.h ./perl.h
+*** ../perl5os2.patch/perl5.001m.andy/perl.h	Tue Jun 20 07:09:02 1995
+--- ./perl.h	Thu Sep 28 00:00:36 1995
+***************
+*** 32,48 ****
+   * code can be a lot prettier.  Well, so much for theory.  Sorry, Henry...
+   */
+  
+- #ifdef MYMALLOC
+- #   ifdef HIDEMYMALLOC
+- #	define malloc Mymalloc
+- #	define realloc Myremalloc
+- #	define free Myfree
+- #   endif
+- #   define safemalloc malloc
+- #   define saferealloc realloc
+- #   define safefree free
+- #endif
+- 
+  /* work around some libPW problems */
+  #ifdef DOINIT
+  EXT char Error[1];
+--- 32,37 ----
+***************
+*** 110,115 ****
+--- 99,115 ----
+  #   include <stdlib.h>
+  #endif /* STANDARD_C */
+  
++ #ifdef MYMALLOC
++ #   ifdef HIDEMYMALLOC
++ #	define malloc Mymalloc
++ #	define realloc Myremalloc
++ #	define free Myfree
++ #   endif
++ #   define safemalloc malloc
++ #   define saferealloc realloc
++ #   define safefree free
++ #endif
++ 
+  #define MEM_SIZE Size_t
+  
+  #if defined(I_STRING) || defined(__cplusplus)
+***************
+*** 537,543 ****
+--- 537,547 ----
+  #define FILTER_ISREADER(idx)	   (idx >= AvFILL(rsfp_filters))
+  
+  #ifdef DOSISH
++ # if defined(OS2)
++ #   include "os2ish.h"
++ # else
+  #   include "dosish.h"
++ # endif
+  #else
+  # if defined(VMS)
+  #   include "vmsish.h"
+diff -cr ..\perl5os2.patch\perl5.001m.andy/pp_ctl.c ./pp_ctl.c
+*** ../perl5os2.patch/perl5.001m.andy/pp_ctl.c	Thu Jun 22 07:28:06 1995
+--- ./pp_ctl.c	Thu Sep 28 00:00:36 1995
+***************
+*** 2002,2013 ****
+  	(*tmpname == '.' && 
+  	    (tmpname[1] == '/' ||
+  	     (tmpname[1] == '.' && tmpname[2] == '/')))
+  #ifdef VMS
+! 	|| ((*tmpname == '[' || *tmpname == '<') &&
+! 	    (tmpname[1] == '-' || tmpname[1] == ']' || tmpname[1] == '>'))
+  #endif
+!     )
+!     {
+  	tryrsfp = fopen(tmpname,"r");
+      }
+      else {
+--- 2002,2015 ----
+  	(*tmpname == '.' && 
+  	    (tmpname[1] == '/' ||
+  	     (tmpname[1] == '.' && tmpname[2] == '/')))
++ #ifdef DOSISH
++       || tmpname[0] && tmpname[1] == ':'
++ #endif
+  #ifdef VMS
+!       || ((*tmpname == '[' || *tmpname == '<')
+!        && (tmpname[1] == '-' || tmpname[1] == ']' || tmpname[1] == '>'))
+  #endif
+!     ){
+  	tryrsfp = fopen(tmpname,"r");
+      }
+      else {
+diff -cr ..\perl5os2.patch\perl5.001m.andy/pp_sys.c ./pp_sys.c
+*** ../perl5os2.patch/perl5.001m.andy/pp_sys.c	Mon Oct 09 21:41:06 1995
+--- ./pp_sys.c	Thu Sep 28 00:00:38 1995
+***************
+*** 1210,1220 ****
+  	DIE("ioctl is not implemented");
+  #endif
+      else
+! #ifdef DOSISH
+  	DIE("fcntl is not implemented");
+  #else
+  #   ifdef HAS_FCNTL
+  	retval = fcntl(fileno(IoIFP(io)), func, s);
+  #   else
+  	DIE("fcntl is not implemented");
+  #   endif
+--- 1210,1224 ----
+  	DIE("ioctl is not implemented");
+  #endif
+      else
+! #if defined(DOSISH) && !defined(OS2)
+  	DIE("fcntl is not implemented");
+  #else
+  #   ifdef HAS_FCNTL
++ #     ifdef __EMX__
++ 	retval = fcntl(fileno(IoIFP(io)), func, (int)s);
++ #     else
+  	retval = fcntl(fileno(IoIFP(io)), func, s);
++ #     endif 
+  #   else
+  	DIE("fcntl is not implemented");
+  #   endif
+***************
+*** 3700,3706 ****
+--- 3704,3714 ----
+      else if (which == OP_GGRGID)
+  	grent = (struct group *)getgrgid(POPi);
+      else
++ #ifdef __EMX__
++ 	grent = (struct group *)NULL;
++ #else
+  	grent = (struct group *)getgrent();
++ #endif 
+  
+      EXTEND(SP, 4);
+      if (GIMME != G_ARRAY) {
+***************
+*** 3718,3724 ****
+--- 3726,3734 ----
+  	PUSHs(sv = sv_mortalcopy(&sv_no));
+  	sv_setpv(sv, grent->gr_name);
+  	PUSHs(sv = sv_mortalcopy(&sv_no));
++ #ifndef __EMX__
+  	sv_setpv(sv, grent->gr_passwd);
++ #endif 
+  	PUSHs(sv = sv_mortalcopy(&sv_no));
+  	sv_setiv(sv, (I32)grent->gr_gid);
+  	PUSHs(sv = sv_mortalcopy(&sv_no));
+***************
+*** 3738,3744 ****
+  PP(pp_sgrent)
+  {
+      dSP;
+! #ifdef HAS_GROUP
+      setgrent();
+      RETPUSHYES;
+  #else
+--- 3748,3754 ----
+  PP(pp_sgrent)
+  {
+      dSP;
+! #if defined (HAS_GROUP) && !defined(__EMX__)
+      setgrent();
+      RETPUSHYES;
+  #else
+***************
+*** 3749,3755 ****
+  PP(pp_egrent)
+  {
+      dSP;
+! #ifdef HAS_GROUP
+      endgrent();
+      RETPUSHYES;
+  #else
+--- 3759,3765 ----
+  PP(pp_egrent)
+  {
+      dSP;
+! #if defined (HAS_GROUP) && !defined(__EMX__)
+      endgrent();
+      RETPUSHYES;
+  #else
+diff -cr ..\perl5os2.patch\perl5.001m.andy/proto.h ./proto.h
+*** ../perl5os2.patch/perl5.001m.andy/proto.h	Thu Jun 22 07:28:04 1995
+--- ./proto.h	Thu Sep 28 00:00:38 1995
+***************
+*** 228,233 ****
+--- 228,238 ----
+  long	my_ntohl _((long l));
+  #endif
+  void	my_unexec _((void));
++ #if defined(MYMALLOC) && defined(HIDEMYMALLOC)
++ extern Malloc_t malloc _((MEM_SIZE));
++ extern Malloc_t realloc _((Malloc_t, MEM_SIZE));
++ extern Free_t   free _((Malloc_t));
++ #endif
+  OP*	newANONLIST _((OP* op));
+  OP*	newANONHASH _((OP* op));
+  OP*	newANONSUB _((I32 floor, OP* block));
+diff -cr ..\perl5os2.patch\perl5.001m.andy/util.c ./util.c
+*** ../perl5os2.patch/perl5.001m.andy/util.c	Mon May 22 12:52:44 1995
+--- ./util.c	Thu Sep 28 00:00:40 1995
+***************
+*** 1363,1369 ****
+      return fdopen(p[this], mode);
+  }
+  #else
+! #ifdef atarist
+  FILE *popen();
+  FILE *
+  my_popen(cmd,mode)
+--- 1363,1369 ----
+      return fdopen(p[this], mode);
+  }
+  #else
+! #if defined(atarist) || defined(OS2)
+  FILE *popen();
+  FILE *
+  my_popen(cmd,mode)
+***************
+*** 1420,1427 ****
+  }
+  #endif
+  
+! #ifndef DOSISH
+! #ifndef VMS /* VMS' my_pclose() is in VMS.c */
+  I32
+  my_pclose(ptr)
+  FILE *ptr;
+--- 1420,1426 ----
+  }
+  #endif
+  
+! #if  !defined(DOSISH) && !defined(VMS)  /* VMS' my_popen() is in VMS.c */
+  I32
+  my_pclose(ptr)
+  FILE *ptr;
+***************
+*** 1450,1456 ****
+      signal(SIGQUIT, qstat);
+      return(pid < 0 ? pid : status);
+  }
+! #endif /* !VMS */
+  I32
+  wait4pid(pid,statusp,flags)
+  int pid;
+--- 1449,1457 ----
+      signal(SIGQUIT, qstat);
+      return(pid < 0 ? pid : status);
+  }
+! #endif /* !DOSISH */
+! 
+! #if  !defined(DOSISH) || defined(OS2)
+  I32
+  wait4pid(pid,statusp,flags)
+  int pid;
+***************
+*** 1524,1530 ****
+      return;
+  }
+  
+! #ifdef atarist
+  int pclose();
+  I32
+  my_pclose(ptr)
+--- 1525,1531 ----
+      return;
+  }
+  
+! #if defined(atarist) || defined(OS2)
+  int pclose();
+  I32
+  my_pclose(ptr)
+diff -cr ..\perl5os2.patch\perl5.001m.andy/x2p/a2p.h ./x2p/a2p.h
+*** ../perl5os2.patch/perl5.001m.andy/x2p/a2p.h	Mon Oct 09 21:41:10 1995
+--- ./x2p/a2p.h	Tue Oct 03 02:17:40 1995
+***************
+*** 79,84 ****
+--- 79,96 ----
+  #  endif
+  #endif
+  
++ #ifdef DOSISH
++ # if defined(OS2)
++ #   include "../os2ish.h"
++ # else
++ #   include "../dosish.h"
++ # endif
++ #else
++ # if defined(VMS)
++ #   include "../vmsish.h"
++ # endif
++ #endif
++ 
+  #ifndef STANDARD_C
+  /* All of these are in stdlib.h or time.h for ANSI C */
+  Time_t time();

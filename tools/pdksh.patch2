@@ -1,0 +1,201 @@
+From ilya Wed Jul 12 05:45:50 1995
+Subject: Re: Os/2 pdksh
+To: daled@cadence.com (Dale DePriest)
+Date: Wed, 12 Jul 1995 05:45:50 -0400 (EDT)
+In-Reply-To: <199507112317.QAA04066@cds9172.cadence.com> from "Dale DePriest" at Jul 11, 95 04:17:06 pm
+X-Mailer: ELM [version 2.4 PL24]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Length: 4412      
+Status: RO
+
+Dale DePriest writes:
+> 
+> True, all of the configure scripts I found did #! since without it even
+> some unix's won't work properly from some shells.
+> 
+
+Unless the created scriptlets check for some specific OS ;-) In fact I
+do not know how they survived porting, since dist-generated Configures
+are probably checked on the widest set of platforms (since perl uses
+it).
+
+Below is the patch. It corrects:
+	1) Spurious \\'s instead of /.
+	2) Absolute path on #! line was absolutely ignored (now it is
+ignored only if the file is missing);
+	3) Supports variables NOHASHBANG and AOUT_EXEC (the last one
+experimental, checked with =echo only, the first one works with =ksh).
+
+
+Enjoy,
+
+Ilya
+
+PS You seems do not know that 5.2.3 is out for almost a month
+now. Your patch applies OK, though.
+
+*** eval.c~	Tue Jul 11 18:41:04 1995
+--- eval.c	Tue Jul 11 22:32:00 1995
+***************
+*** 91,99 ****
+--- 91,101 ----
+  #ifdef	SHARPBANG
+	XPput(w, NULL);		/* and space for one arg */
+  #endif
++ #if 0
+  #ifdef OS2
+	expand(*ap++, &w, f | DODIRSWP);
+  #endif /* OS2 */
++ #endif /* 0 */
+	while (*ap != NULL)
+		expand(*ap++, &w, f);
+	XPput(w, NULL);
+*** exec.c~	Tue Jul 11 18:41:08 1995
+--- exec.c	Wed Jul 12 02:25:06 1995
+***************
+*** 25,30 ****
+--- 25,33 ----
+  static void	dbteste_error ARGS((Test_env *te, int offset, char *msg));
+  #endif /* KSH */
+  
++ #ifdef OS2
++ static int search_access1(char *path, int mode);
++ #endif
+  
+  /*
+   * handle systems that don't have F_SETFD
+***************
+*** 672,677 ****
+--- 675,683 ----
+	register char **ap;
+  {
+	char *shell;
++ #ifdef OS2
++	int execed = 1;			/* True if run by OS2_SHELL. */
++ #endif 
+  
+	shell = strval(global(EXECSHELL_STR));
+	if (shell && *shell)
+***************
+*** 702,709 ****
+			while (*cp && (*cp == ' ' || *cp == '\t'))
+				cp++;
+			if (*cp && *cp != '\n') {
+!				char *a0 = cp, *a1 = (char *) 0;
+  
+				while (*cp && *cp != '\n' && *cp != ' '
+				       && *cp != '\t')
+				{
+--- 708,718 ----
+			while (*cp && (*cp == ' ' || *cp == '\t'))
+				cp++;
+			if (*cp && *cp != '\n') {
+!				char *a0 = cp, *a1 = (char *) 0, *a2 = cp;
+  
++ #ifdef OS2
++				execed = 0;
++ #endif 
+				while (*cp && *cp != '\n' && *cp != ' '
+				       && *cp != '\t')
+				{
+***************
+*** 734,752 ****
+					*cp = '\0';
+					if (a1)
+						*tp->args-- = a1;
+					shell = a0;
+				}
+			}
+  # ifdef OS2
+!		} else {
+			/* Should really check shell type before
+!			 * making this assumption.
+			 */
+			*tp->args-- = "/c";
+  # endif /* OS2 */
+		}
+	}
+  #endif	/* SHARPBANG */
+	*tp->args = shell;
+  
+	ksh_execve(tp->args[0], tp->args, ap);
+--- 743,805 ----
+					*cp = '\0';
+					if (a1)
+						*tp->args-- = a1;
++ #ifdef OS2
++					if (a0 != a2 
++					    && search_access1(a2, X_OK) != -1) {
++					  a0 = a2;
++					}
++ #endif 
+					shell = a0;
+				      }
+			}
+  # ifdef OS2
+!		} else if (buf[0] == 'M' && buf[1] == 'Z') {
+			/* Should really check shell type before
+!			 * making this assumption. In fact this code
+!			 * is not reached, the executables are
+!			 * intercepted in a different place (?). IZ
+			 */
+			*tp->args-- = "/c";
++			execed = 1;
++		} else if (buf[0] == 0x0B && buf[1] == 0x01) {
++		    /* a.out style file */
++		         char *oshell = shell;
++ 
++			 execed = 0;
++			 shell = strval(global(AOUT_SHELL_STR));
++			 if (shell && *shell)
++			   shell = search(shell, path, X_OK);
++			 if (!shell || !*shell) {
++			   shell = oshell;
++			   *tp->args-- = "/c";
++			   execed = 1;
++			 }
++		} else {
++		         char *oshell = shell;
++ 
++			 execed = 0;
++			 shell = strval(global(NO_HB_SHELL_STR));
++			 if (shell && *shell)
++			   shell = search(shell, path, X_OK);
++			 if (!shell || !*shell) {
++			   shell = oshell;
++			   *tp->args-- = "/c";
++			   execed = 1;
++			 }
+  # endif/* OS2 */
+		       }
+	}
+  #endif	/* SHARPBANG */
++ #ifdef OS2
++	if (execed) {
++	  /* tp->str is given as an argument to OS2_SHELL */
++	  char *p;
++ 
++	  for ( p = tp->str; *p; p++ )
++	    if ( *p == '/' )
++	      *p = '\\';
++	}
++ #endif 
+	*tp->args = shell;
+  
+	ksh_execve(tp->args[0], tp->args, ap);
+*** sh.h~	Tue Jul 11 21:49:34 1995
+--- sh.h	Wed Jul 12 00:25:22 1995
+***************
+*** 252,257 ****
+--- 252,259 ----
+  # ifdef OS2
+  #  define EXECSHELL	"c:\\os2\\cmd.exe"
+  #  define EXECSHELL_STR	"OS2_SHELL"
++ #  define NO_HB_SHELL_STR "NOHASHBANG"
++ #  define AOUT_SHELL_STR "AOUT_SHELL"
+  # else /* OS2 */
+  #  define EXECSHELL	"/bin/sh"
+  #  define EXECSHELL_STR	"EXECSHELL"
+

@@ -1,0 +1,5572 @@
+From owner-perl5-porters@nicoh.com  Wed Sep 27 17:15:50 1995
+Received: from africa.nicoh.com (daemon@africa.nicoh.com [198.60.251.1]) by mathserv.mps.ohio-state.edu (8.7.Beta.7/8.7.Beta.7) with ESMTP id RAA03632 for <ilya@math.ohio-state.edu>; Wed, 27 Sep 1995 17:14:59 -0400 (EDT)
+Received: from localhost by africa.nicoh.com with SMTP
+	(1.37.109.15/16.2) id AA234126491; Wed, 27 Sep 1995 17:14:51 -0400
+Received: by africa.nicoh.com
+	(1.37.109.15/16.2) id AA231756358; Wed, 27 Sep 1995 17:12:38 -0400
+Date: Wed, 27 Sep 1995 17:05:30 -0400 (EDT)
+From: Andy Dougherty <doughera@lafcol.lafayette.edu>
+Subject: Jumbo Configure patch vs. 1m.
+To: Perl Porters <perl5-porters@africa.nicoh.com>
+Message-Id: <Pine.3.89.9509271752.A3655-0100000@lafcol>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-perl5-porters@nicoh.com
+List-Name: perl5-porters
+Precedence: bulk
+Status: RO
+
+# This is a Jumbo Configure patch for perl5.001m.  See description below.
+#	Andy Dougherty		doughera@lafcol.lafayette.edu
+#
+exit 0
+
+This is a Jumbo Configure patch for perl5.001m.  I have not called
+this patch.1n because it is not complete or comprehensive; I've
+tried to avoid duplicating already-posted work that Larry may have
+already applied.
+
+This patch should be applied on top of perl5.001m.  It supersedes any
+patches I have posted since patch.1m.  I've tried not to conflict with
+any other posted patches.
+
+I'd appreciate feedback/corrections/patches, especially regarding the new 
+INSTALL instructions and Configure's new approach to finding things like
+/opt/local/lib/libgdbm.a.
+
+Highlights of this patch include:
+
+Configure updates:
+    
+    Most of the "important" questions are now near the beginning.
+
+    Several "nuisance" questions have been eliminated if the test
+    script runs ok and the answer is something we expect.  Examples
+    are sizeof(int), void support  and byte order.
+    
+    Several questions eliminated (at least for most users), such as 
+    "where are your include files", and the portability question.
+
+    Configure is now much more aggressive about finding local
+    libraries in places such as /usr/local/lib and /usr/local/include.
+    Ways to use this from the command line are documented in 
+    the new INSTALL file.  I hope this doesn't cause problems.
+
+    Configure now trys <dbm.h> and <rpcsvc/dbm.h> without explicit
+    hinting.
+
+INSTALL
+    A new file with more detailed Configure instructions, including
+    examples.
+
+MANIFEST
+    Updated.
+
+    GNU-style configure is listed early so that an extraction of
+    the tar archive on OS/2 will extract Configure second.  Maybe
+    I should call it GNUconfigure, but that would eliminate much of
+    the virtue of having configure at all, namely that perl presents
+    the same appearance as GNU packages and can be installed without
+    special instructions.
+
+Makefile.SH
+    Ignore some errors in make clean and make realclean so that
+    make distclean does as much cleaning as possible, including
+    rm config.sh.
+
+README
+    Trimmed down, now that I've moved build & install stuff over to
+    INSTALL.
+
+config_H
+    Updated.
+Index: config_h.SH
+    Updated.
+Index: configure
+    Updated.
+Index: embed.h
+    I missed a few name changes last time.
+Index: ext/ODBM_File/ODBM_File.xs
+    Look for <rpcsvc/dbm.h> as well as <dbm.h>.  A few hint files
+    already did this; I just now do it generally.
+Index: global.sym
+    I missed a few name changes last time.
+Index: h2xs.SH
+    Some patches from Jeff Okamoto.
+Index: hints/aix.sh
+Index: hints/hpux_9.sh
+Index: hints/isc.sh
+Index: hints/isc_2.sh
+    Updates.
+Index: hints/solaris_2.sh
+    Lots of updates.  I've included a variant of Dean's gcc-on-solaris
+    checker as well as his accumulated notes on the subject.
+Index: hints/unicos.sh
+Index: hints/utekv.sh
+    Updates.
+Index: lib/ExtUtils/MakeMaker.pm
+    Trivial newline patch.
+Index: makedepend.SH
+    Make sure we get current cppstdin, not the one in /usr/local/bin
+    from some previous installation.
+Index: pp_sys.c
+    Move socket stuff inside the right #ifdef
+Index: t/README
+    Delete obsolete information.
+Index: x2p/a2p.h
+    Include "../embed.h" so that users can build with or without
+    -DEMBED.
+
+Patch and Enjoy,
+
+    Andy Dougherty		doughera@lafcol.lafayette.edu
+    Dept. of Physics
+    Lafayette College, Easton PA 18042
+Index: Changes.Conf
+*** perl5.001m/Changes.Conf	Tue Jun  6 13:23:58 1995
+--- perl5.001n/Changes.Conf	Wed Sep 27 14:55:26 1995
+***************
+*** 33,39 ****
+  Therefore, you are probably better off ignoring your old config.sh, as
+  in the following:
+  
+! 	make distclean # (if you've built perl before)
+  	sh Configure [whatever options you like]
+  	make depend
+  	make
+--- 33,40 ----
+  Therefore, you are probably better off ignoring your old config.sh, as
+  in the following:
+  
+! 	make distclean 		# (if you've built perl before)
+! 	rm -f config.sh 	# (in case distclean mysteriously fails)
+  	sh Configure [whatever options you like]
+  	make depend
+  	make
+Index: Configure
+Prereq:  3.0.1.7 
+*** perl5.001m/Configure	Thu Jun 22 11:03:49 1995
+--- perl5.001n/Configure	Wed Sep 27 11:40:01 1995
+***************
+*** 18,26 ****
+  # archive site. Check with Archie if you don't know where that can be.)
+  #
+  
+! # $Id: Head.U,v 3.0.1.7 1995/03/21 08:46:15 ram Exp $
+  #
+! # Generated on Thu Jun 22 10:38:35 EDT 1995 [metaconfig 3.0 PL55]
+  
+  cat >/tmp/c1$$ <<EOF
+  ARGGGHHHH!!!!!
+--- 18,26 ----
+  # archive site. Check with Archie if you don't know where that can be.)
+  #
+  
+! # $Id: Head.U,v 3.0.1.8 1995/07/25 13:40:02 ram Exp $
+  #
+! # Generated on Wed Sep 27 11:39:04 EDT 1995 [metaconfig 3.0 PL58]
+  
+  cat >/tmp/c1$$ <<EOF
+  ARGGGHHHH!!!!!
+***************
+*** 55,60 ****
+--- 55,68 ----
+  	;;
+  esac
+  
++ : Proper PATH separator
++ p_=:
++ : On OS/2 this directory should exist if this is not floppy only system :-]
++ if test -d c:/.; then
++ 	p_=\;
++ 	PATH=`cmd /c "echo %PATH%" | tr '\\\\' / `
++ 	OS2_SHELL=`cmd /c "echo %OS2_SHELL%" | tr '\\\\' / | tr '[A-Z]' '[a-z]'`
++ fi
+  
+  : Proper PATH setting
+  paths='/bin /usr/bin /usr/local/bin /usr/ucb /usr/local /usr/lbin'
+***************
+*** 68,80 ****
+  
+  for p in $paths
+  do
+! 	case ":$PATH:" in
+! 	*:$p:*) ;;
+! 	*) test -d $p && PATH=$PATH:$p ;;
+  	esac
+  done
+  
+! PATH=.:$PATH
+  export PATH
+  
+  : Sanity checks
+--- 76,88 ----
+  
+  for p in $paths
+  do
+! 	case "$p_$PATH$p_" in
+! 	*$p_$p$p_*) ;;
+! 	*) test -d $p && PATH=$PATH$p_$p ;;
+  	esac
+  done
+  
+! PATH=.$p_$PATH
+  export PATH
+  
+  : Sanity checks
+***************
+*** 105,111 ****
+  
+  : Configure runs within the UU subdirectory
+  test -d UU || mkdir UU
+! cd UU && rm -f *
+  
+  dynamic_ext=''
+  extensions=''
+--- 113,119 ----
+  
+  : Configure runs within the UU subdirectory
+  test -d UU || mkdir UU
+! cd UU && rm -f ./*
+  
+  dynamic_ext=''
+  extensions=''
+***************
+*** 217,223 ****
+--- 225,233 ----
+  cppflags=''
+  ldflags=''
+  lkflags=''
++ locincpth=''
+  optimize=''
++ cf_email=''
+  cf_by=''
+  cf_time=''
+  contains=''
+***************
+*** 408,413 ****
+--- 418,424 ----
+  db_prefixtype=''
+  i_db=''
+  i_dbm=''
++ i_rpcsvcdbm=''
+  d_dirnamlen=''
+  direntrytype=''
+  i_dirent=''
+***************
+*** 466,471 ****
+--- 477,483 ----
+  libc=''
+  glibpth=''
+  libpth=''
++ loclibpth=''
+  plibpth=''
+  xlibpth=''
+  libs=''
+***************
+*** 505,510 ****
+--- 517,523 ----
+  package=''
+  spackage=''
+  patchlevel=''
++ perladmin=''
+  prefix=''
+  prefixexp=''
+  installprivlib=''
+***************
+*** 623,651 ****
+  
+  groupstype=''
+  i_whoami=''
+  : change the next line if compiling for Xenix/286 on Xenix/386
+  xlibpth='/usr/lib/386 /lib/386'
+  
+  : general looking path for locating libraries
+! glibpth="/lib/pa1.1 /usr/lib/large /lib /usr/lib $xlibpth"
+! glibpth="$glibpth /lib/large /usr/lib/small /lib/small"
+! glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/local/lib /usr/shlib"
+  
+  : Private path used by Configure to find libraries.  Its value
+  : is prepended to libpth. This variable takes care of special
+  : machines, like the mips.  Usually, it should be empty.
+  plibpth=''
+  
+- : default library list
+- libswanted=''
+  : full support for void wanted by default
+  defvoidused=15
+  
+- : set useposix=false in your hint file to disable the POSIX extension.
+- useposix=true
+- : no include file wanted by default
+- inclwanted=''
+- 
+  : List of libraries we want.
+  libswanted='net socket inet nsl nm ndbm gdbm dbm db malloc dl'
+  libswanted="$libswanted dld ld sun m c cposix posix ndir dir crypt"
+--- 636,672 ----
+  
+  groupstype=''
+  i_whoami=''
++ : default library list
++ libswanted=''
++ : set useposix=false in your hint file to disable the POSIX extension.
++ useposix=true
++ : Possible local include directories to search.
++ locincpth="/usr/local/include /opt/local/include /usr/gnu/include"
++ locincpth="$locincpth /opt/gnu/include /usr/GNU/include /opt/GNU/include"
++ :
++ : no include file wanted by default
++ inclwanted=''
++ 
+  : change the next line if compiling for Xenix/286 on Xenix/386
+  xlibpth='/usr/lib/386 /lib/386'
+  
++ : Possible local library directories to search.
++ loclibpth="/usr/local/lib /opt/local/lib /usr/gnu/lib"
++ loclibpth="$loclibpth /opt/gnu/lib /usr/GNU/lib /opt/GNU/lib"
++ 
+  : general looking path for locating libraries
+! glibpth="/lib/pa1.1 /usr/shlib /usr/lib/large /lib /usr/lib"
+! glibpth="$glibpth $xlibpth /lib/large /usr/lib/small /lib/small"
+! glibpth="$glibpth /usr/ccs/lib /usr/ucblib /usr/shlib"
+  
+  : Private path used by Configure to find libraries.  Its value
+  : is prepended to libpth. This variable takes care of special
+  : machines, like the mips.  Usually, it should be empty.
+  plibpth=''
+  
+  : full support for void wanted by default
+  defvoidused=15
+  
+  : List of libraries we want.
+  libswanted='net socket inet nsl nm ndbm gdbm dbm db malloc dl'
+  libswanted="$libswanted dld ld sun m c cposix posix ndir dir crypt"
+***************
+*** 656,664 ****
+  glibpth="/usr/shlib $glibpth"
+  : Do not use vfork unless overridden by a hint file.
+  usevfork=false
+- : We might as well always be portable.  It makes no difference for
+- : perl5, and makes people happy.
+- d_portable=define
+  
+  : script used to extract .SH files with variable substitutions
+  cat >extract <<'EOS'
+--- 677,682 ----
+***************
+*** 818,824 ****
+  		esac
+  		shift
+  		;;
+! 	-V) echo "$me generated by metaconfig 3.0 PL55." >&2
+  		exit 0;;
+  	--) break;;
+  	-*) echo "$me: unknown option $1" >&2; shift; error=true;;
+--- 836,842 ----
+  		esac
+  		shift
+  		;;
+! 	-V) echo "$me generated by metaconfig 3.0 PL58." >&2
+  		exit 0;;
+  	--) break;;
+  	-*) echo "$me: unknown option $1" >&2; shift; error=true;;
+***************
+*** 1297,1302 ****
+--- 1315,1321 ----
+  rm
+  sed
+  sort
++ tail
+  touch
+  tr
+  uniq
+***************
+*** 1314,1320 ****
+  test
+  uname
+  "
+! pth=`echo $PATH | sed -e 's/:/ /g'`
+  pth="$pth /lib /usr/lib"
+  for file in $loclist; do
+  	xxx=`./loc $file $file $pth`
+--- 1333,1339 ----
+  test
+  uname
+  "
+! pth=`echo $PATH | sed -e "s/$p_/ /g"`
+  pth="$pth /lib /usr/lib"
+  for file in $loclist; do
+  	xxx=`./loc $file $file $pth`
+***************
+*** 1324,1329 ****
+--- 1343,1351 ----
+  	/*)
+  		echo $file is in $xxx.
+  		;;
++ 	?:[\\/]*)
++ 		echo $file is in $xxx.
++ 		;;
+  	*)
+  		echo "I don't know where $file is.  I hope it's in everyone's PATH."
+  		;;
+***************
+*** 1340,1345 ****
+--- 1362,1370 ----
+  	/*)
+  		echo $file is in $xxx.
+  		;;
++ 	?:[\\/]*)
++ 		echo $file is in $xxx.
++ 		;;
+  	*)
+  		echo "I don't see $file out there, $say."
+  		say=either
+***************
+*** 1679,1684 ****
+--- 1704,1713 ----
+  				osname=news_os
+  			fi
+  			$rm -f ../UU/kernel.what
++ 		elif test -d c:/.; then
++ 			set X $myuname
++ 			osname=os2
++ 			osvers="$5"
+  		fi
+  	fi
+  	
+***************
+*** 2142,2170 ****
+  1*) cpp=`./loc gcc-cpp $cpp $pth` ;;
+  esac
+  
+! : decide how portable to be
+  case "$d_portable" in
+! "$define") dflt=y;;
+! *)	dflt=n;;
+! esac
+! $cat <<'EOH'
+!  
+! I can set things up so that your shell scripts and binaries are more portable,
+! at what may be a noticable cost in performance.  In particular, if you
+! ask to be portable, the following happens:
+! 
+!      1) Shell scripts will rely on the PATH variable rather than using
+! 	the paths derived above.
+!      2) ~username interpretations will be done at run time rather than
+! 	by Configure.
+! 
+! EOH
+! rp="Do you expect to run these scripts and binaries on multiple machines?"
+! . ./myread
+! case "$ans" in
+! 	y*) d_portable="$define"
+! 	;;
+! 	*)  d_portable="$undef" ;;
+  esac
+  
+  : set up shell script to do ~ expansion
+--- 2171,2180 ----
+  1*) cpp=`./loc gcc-cpp $cpp $pth` ;;
+  esac
+  
+! : decide how portable to be.  Allow command line overrides.
+  case "$d_portable" in
+! "$undef") ;;
+! *)	d_portable="$define" ;;
+  esac
+  
+  : set up shell script to do ~ expansion
+***************
+*** 2433,2441 ****
+--- 2443,2453 ----
+  	fi
+  	$rm -f usr.c usr.out
+  	echo "and you're compiling with the $mips_type compiler and libraries."
++ 	xxx_prompt=y
+  	echo "exit 0" >mips
+  else
+  	echo "Doesn't look like a MIPS system."
++ 	xxx_prompt=n
+  	echo "exit 1" >mips
+  fi
+  chmod +x mips
+***************
+*** 2445,2454 ****
+  '') ;;
+  *) dflt="$usrinc";;
+  esac
+! fn=d/
+! rp='Where are the include files you want to use?'
+! . ./getfile
+! usrinc="$ans"
+  
+  : see how we invoke the C preprocessor
+  echo " "
+--- 2457,2471 ----
+  '') ;;
+  *) dflt="$usrinc";;
+  esac
+! case "$xxx_prompt" in
+! y)	fn=d/
+! 	rp='Where are the include files you want to use?'
+! 	. ./getfile
+! 	usrinc="$ans"
+! 	;;
+! *)	usrinc="$dflt"
+! 	;;
+! esac
+  
+  : see how we invoke the C preprocessor
+  echo " "
+***************
+*** 2588,2703 ****
+  esac
+  $rm -f testcpp.c testcpp.out
+  
+! : determine optimize, if desired, or use for debug flag also
+! case "$optimize" in
+! ' ') dflt='none';;
+! '') dflt='-O';;
+! *) dflt="$optimize";;
+  esac
+- $cat <<EOH
+  
+! Some C compilers have problems with their optimizers, by default, $package
+! compiles with the -O flag to use the optimizer.  Alternately, you might want
+! to use the symbolic debugger, which uses the -g flag (on traditional Unix
+! systems).  Either flag can be specified here.  To use neither flag, specify
+! the word "none".
+  
+! EOH
+! rp="What optimizer/debugger flag should be used?"
+  . ./myread
+! optimize="$ans"
+! case "$optimize" in
+! 'none') optimize=" ";;
+  esac
+  
+! dflt=''
+! case "$ccflags" in
+! '')	
+! 	case "$gccversion" in
+! 	1*) dflt='-fpcc-struct-return' ;;
+! 	esac
+! 	case "$optimize" in
+! 	*-g*) dflt="$dflt -DDEBUGGING";;
+! 	esac
+! 	case "$gccversion" in
+! 	2*) if test -d /etc/conf/kconfig.d &&
+! 			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
+! 		then
+! 			dflt="$dflt -posix"
+! 		fi
+! 		;;
+! 	esac
+  	;;
+  esac
+  
+! case "$mips_type" in
+! *BSD*) ;;
+  '') ;;
+! *) inclwanted="$inclwanted $usrinc/bsd";;
+  esac
+! for thisincl in $inclwanted; do
+! 	if $test -d $thisincl; then
+! 		if $test x$thisincl != x$usrinc; then
+! 			case "$dflt" in
+! 			*$thisincl*);;
+! 			*) dflt="$dflt -I$thisincl";;
+! 			esac
+! 		fi
+! 	fi
+! done
+  
+! inctest='if $contains $2 $usrinc/$1 >/dev/null 2>&1; then
+! 	xxx=true;
+! elif $contains $2 $usrinc/sys/$1 >/dev/null 2>&1; then
+! 	xxx=true;
+! else
+! 	xxx=false;
+! fi;
+! if $xxx; then
+! 	case "$dflt" in
+! 	*$2*);;
+! 	*) dflt="$dflt -D$2";;
+! 	esac;
+! fi'
+  
+! if ./osf1; then
+! 	set signal.h __LANGUAGE_C__; eval $inctest
+  else
+! 	set signal.h LANGUAGE_C; eval $inctest
+  fi
+- set signal.h NO_PROTOTYPE; eval $inctest
+- set signal.h _NO_PROTO; eval $inctest
+  
+! case "$dflt" in
+! '') dflt=none;;
+! esac
+! case "$ccflags" in
+! '') ;;
+! *) dflt="$ccflags";;
+! esac
+! $cat <<EOH
+  
+! Your C compiler may want other flags.  For this question you should include
+! -I/whatever and -DWHATEVER flags and any other flags used by the C compiler,
+! but you should NOT include libraries or ld flags like -lwhatever.  If you
+! want $package to honor its debug switch, you should include -DDEBUGGING here.
+! Your C compiler might also need additional flags, such as -D_POSIX_SOURCE,
+! -DHIDEMYMALLOC or -DCRIPPLED_CC.
+  
+! To use no flags, specify the word "none".
+  
+! EOH
+! set X $dflt
+! shift
+! dflt=${1+"$@"}
+! rp="Any additional cc flags?"
+! . ./myread
+! case "$ans" in
+! none) ccflags='';;
+! *) ccflags="$ans";;
+! esac
+  
+! : the following weeds options from ccflags that are of no interest to cpp
+  cppflags="$ccflags"
+  case "$gccversion" in
+  1*) cppflags="$cppflags -D__GNUC__"
+--- 2605,3621 ----
+  esac
+  $rm -f testcpp.c testcpp.out
+  
+! : Set private lib path
+! case "$plibpth" in
+! '') if ./mips; then
+! 		plibpth="$incpath/usr/lib /usr/local/lib /usr/ccs/lib"
+! 	fi;;
+! esac
+! case "$libpth" in
+! ' ') dlist='';;
+! '') dlist="$loclibpth $plibpth $glibpth";;
+! *) dlist="$libpth";;
+  esac
+  
+! : Now check and see which directories actually exist, avoiding duplicates
+! libpth=''
+! for xxx in $dlist
+! do
+!     if $test -d $xxx; then
+! 		case " $libpth " in
+! 		*" $xxx "*) ;;
+! 		*) libpth="$libpth $xxx";;
+! 		esac
+!     fi
+! done
+! $cat <<'EOM'
+  
+! Some systems have incompatible or broken versions of libraries.  Among
+! the directories listed in the question below, please remove any you
+! know not to be holding relevant libraries, and add any that are needed.
+! Say "none" for none.
+! 
+! EOM
+! case "$libpth" in
+! '') dflt='none';;
+! *)
+! 	set X $libpth
+! 	shift
+! 	dflt=${1+"$@"}
+! 	;;
+! esac
+! rp="Directories to use for library searches?"
+  . ./myread
+! case "$ans" in
+! none) libpth=' ';;
+! *) libpth="$ans";;
+  esac
+  
+! : determine root of directory hierarchy where package will be installed.
+! case "$prefix" in
+! '')
+! 	dflt=`./loc . /usr/local /usr/local /local /opt /usr`
+! 	;;
+! *)
+! 	dflt="$prefix"
+  	;;
+  esac
++ $cat <<EOM
+  
+! By default, $package will be installed in $dflt/bin, manual
+! pages under $dflt/man, etc..., i.e. with $dflt as prefix for
+! all installation directories. Typically set to /usr/local, but you
+! may choose /usr if you wish to install $package among your system
+! binaries. If you wish to have binaries under /bin but manual pages
+! under /usr/local/man, that's ok: you will be prompted separately
+! for each of the installation directories, the prefix being only used
+! to set the defaults.
+! 
+! EOM
+! fn=d~
+! rp='Installation prefix to use?'
+! . ./getfile
+! oldprefix=''
+! case "$prefix" in
+  '') ;;
+! *)
+! 	case "$ans" in
+! 	"$prefix") ;;
+! 	*) oldprefix="$prefix";;
+! 	esac
+! 	;;
+  esac
+! prefix="$ans"
+! prefixexp="$ansexp"
+  
+! : set the prefixit variable, to compute a suitable default value
+! prefixit='case "$3" in
+! ""|none)
+! 	case "$oldprefix" in
+! 	"") eval "$1=\"\$$2\"";;
+! 	*)
+! 		case "$3" in
+! 		"") eval "$1=";;
+! 		none)
+! 			eval "tp=\"\$$2\"";
+! 			case "$tp" in
+! 			""|" ") eval "$1=\"\$$2\"";;
+! 			*) eval "$1=";;
+! 			esac;;
+! 		esac;;
+! 	esac;;
+! *)
+! 	eval "tp=\"$oldprefix-\$$2-\""; eval "tp=\"$tp\"";
+! 	case "$tp" in
+! 	--|/*--|\~*--) eval "$1=\"$prefix/$3\"";;
+! 	/*-$oldprefix/*|\~*-$oldprefix/*)
+! 		eval "$1=\`echo \$$2 | sed \"s,^$oldprefix,$prefix,\"\`";;
+! 	*) eval "$1=\"\$$2\"";;
+! 	esac;;
+! esac'
+  
+! : is AFS running?
+! echo " "
+! if test -d /afs; then
+! 	echo "AFS may be running... I'll be extra cautious then..." >&4
+! 	afs=true
+  else
+! 	echo "AFS does not seem to be running..." >&4
+! 	afs=false
+  fi
+  
+! : determine where public executables go
+! echo " "
+! set dflt bin bin
+! eval $prefixit
+! fn=d~
+! rp='Pathname where the public executables will reside?'
+! . ./getfile
+! if $test "X$ansexp" != "X$binexp"; then
+! 	installbin=''
+! fi
+! bin="$ans"
+! binexp="$ansexp"
+! if $afs; then
+! 	$cat <<EOM
+  
+! Since you are running AFS, I need to distinguish the directory in which
+! executables reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+  
+! EOM
+! 	case "$installbin" in
+! 	'') dflt=`echo $binexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installbin";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will public executables be installed?'
+! 	. ./getfile
+! 	installbin="$ans"
+! else
+! 	installbin="$binexp"
+! fi
+  
+! : set the prefixup variable, to restore leading tilda escape
+! prefixup='case "$prefixexp" in
+! "$prefix") ;;
+! *) eval "$1=\`echo \$$1 | sed \"s,^$prefixexp,$prefix,\"\`";;
+! esac'
+  
+! : determine where public executable scripts go
+! set scriptdir scriptdir
+! eval $prefixit
+! case "$scriptdir" in
+! '')
+! 	dflt="$bin"
+! 	: guess some guesses
+! 	$test -d /usr/share/scripts && dflt=/usr/share/scripts
+! 	$test -d /usr/share/bin && dflt=/usr/share/bin
+! 	$test -d /usr/local/script && dflt=/usr/local/script
+! 	$test -d $prefixexp/script && dflt=$prefixexp/script
+! 	set dflt
+! 	eval $prefixup
+! 	;;
+! *)  dflt="$scriptdir"
+! 	;;
+! esac
+! $cat <<EOM
+!  
+! Some installations have a separate directory just for executable scripts so
+! that they can mount it across multiple architectures but keep the scripts in
+! one spot.  You might, for example, have a subdirectory of /usr/share for this.
+! Or you might just lump your scripts in with all your other executables.
+!  
+! EOM
+! fn=d~
+! rp='Where do you keep publicly executable scripts?'
+! . ./getfile
+! if $test "X$ansexp" != "X$scriptdirexp"; then
+! 	installscript=''
+! fi
+! scriptdir="$ans"
+! scriptdirexp="$ansexp"
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! scripts reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installscript" in
+! 	'') dflt=`echo $scriptdirexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installscript";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will public scripts be installed?'
+! 	. ./getfile
+! 	installscript="$ans"
+! else
+! 	installscript="$scriptdirexp"
+! fi
+! 
+! : determine where private executables go
+! set dflt privlib lib/$package
+! eval $prefixit
+! $cat <<EOM
+! 
+! There are some auxiliary files for $package that need to be put into a
+! private library directory that is accessible by everyone.
+! 
+! EOM
+! fn=d~+
+! rp='Pathname where the private library files will reside?'
+! . ./getfile
+! if $test "X$privlibexp" != "X$ansexp"; then
+! 	installprivlib=''
+! fi
+! privlib="$ans"
+! privlibexp="$ansexp"
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installprivlib" in
+! 	'') dflt=`echo $privlibexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installprivlib";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will private files be installed?'
+! 	. ./getfile
+! 	installprivlib="$ans"
+! else
+! 	installprivlib="$privlibexp"
+! fi
+! 
+! : determine the architecture name
+! echo " "
+! if xxx=`./loc arch blurfl $pth`; $test -f "$xxx"; then
+! 	tarch=`arch`"-$osname"
+! elif xxx=`./loc uname blurfl $pth`; $test -f "$xxx" ; then
+! 	if uname -m > tmparch 2>&1 ; then
+! 		tarch=`$sed -e 's/ /_/g' -e 's/$/'"-$osname/" tmparch`
+! 	else
+! 		tarch="$osname"
+! 	fi
+! 	$rm -f tmparch
+! else
+! 	tarch="$osname"
+! fi
+! case "$myarchname" in
+! ''|"$tarch") ;;
+! *)
+! 	echo "(Your architecture name used to be $myarchname.)"
+! 	archname=''
+! 	;;
+! esac
+! case "$archname" in
+! '') dflt="$tarch";;
+! *) dflt="$archname";;
+! esac
+! rp='What is your architecture name'
+! . ./myread
+! archname="$ans"
+! myarchname="$tarch"
+! 
+! : determine where public architecture dependent libraries go
+! set archlib archlib
+! eval $prefixit
+! case "$archlib" in
+! '')
+! 	case "$privlib" in
+! 	'')
+! 		dflt=`./loc . "." $prefixexp/lib /usr/local/lib /usr/lib /lib`
+! 		set dflt
+! 		eval $prefixup
+! 		;;
+! 	*)  dflt="$privlib/$archname";;
+! 	esac
+! 	;;
+! *) dflt="$archlib";;
+! esac
+! cat <<EOM
+! 
+! $spackage contains architecture-dependent library files.  If you are
+! sharing libraries in a heterogeneous environment, you might store
+! these files in a separate location.  Otherwise, you can just include
+! them with the rest of the public library files.
+! 
+! EOM
+! fn=d~
+! rp='Where do you want to put the public architecture-dependent libraries?'
+! . ./getfile
+! archlib="$ans"
+! archlibexp="$ansexp"
+! 
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installarchlib" in
+! 	'') dflt=`echo $archlibexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installarchlib";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will architecture-dependent library files be installed?'
+! 	. ./getfile
+! 	installarchlib="$ans"
+! else
+! 	installarchlib="$archlibexp"
+! fi
+! if $test X"$archlib" = X"$privlib"; then
+! 	d_archlib="$undef"
+! else
+! 	d_archlib="$define"
+! fi
+! 
+! : determine whether the user wants to include a site-specific library
+! : in addition to privlib.
+! $cat <<EOM
+! 
+! Some sites may wish to specify a local directory for $package
+! to search by default in addition to $privlib.
+! If you don't want to use such an additional directory, answer 'none'.
+! 
+! EOM
+! case "$sitelib" in
+! '') dflt=none ;;
+! *) dflt="$sitelib" ;;
+! esac
+! fn=d~+n
+! rp='Local directory for additional library files?'
+! . ./getfile
+! if $test "X$sitelibexp" != "X$ansexp"; then
+! 	installsitelib=''
+! fi
+! sitelib="$ans"
+! sitelibexp="$ansexp"
+! if $afs; then
+!     case "$sitelib" in
+! 	'') installsitelib="$sitelibexp"
+! 		;;
+! 	*)	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 		case "$installsitelib" in
+! 		'') dflt=`echo $sitelibexp | sed 's#^/afs/#/afs/.#'`;;
+! 		*) dflt="$installsitelib";;
+! 		esac
+! 		fn=de~
+! 		rp='Where will additional local files be installed?'
+! 		. ./getfile
+! 		installsitelib="$ans"
+! 		;;
+! 	esac
+! else
+! 	installsitelib="$sitelibexp"
+! fi
+! 
+! case "$sitelibexp" in
+! '') d_sitelib=undef ;;
+! *) d_sitelib=define ;;
+! esac
+! 
+! : determine where manual pages go
+! set man1dir man1dir none
+! eval $prefixit
+! $cat <<EOM
+! 
+! $spackage has manual pages available in source form.
+! EOM
+! case "$nroff" in
+! nroff)
+! 	echo "However, you don't have nroff, so they're probably useless to you."
+! 	case "$man1dir" in
+! 	'') man1dir="none";;
+! 	esac;;
+! esac
+! echo "If you don't want the manual sources installed, answer 'none'."
+! case "$man1dir" in
+! '')
+! 	lookpath="$prefixexp/man/man1 $prefixexp/man/u_man/man1"
+! 	lookpath="$lookpath $prefixexp/man/l_man/man1"
+! 	lookpath="$lookpath /usr/local/man/man1 /opt/man/man1 /usr/man/manl"
+! 	lookpath="$lookpath /usr/man/local/man1 /usr/man/l_man/man1"
+! 	lookpath="$lookpath /usr/local/man/u_man/man1 /usr/local/man/l_man/man1"
+! 	lookpath="$lookpath /usr/man/man.L"
+! 	man1dir=`./loc . $prefixexp/man/man1 $lookpath`
+! 	if $test -d "$man1dir"; then
+! 		dflt="$man1dir"
+! 	else
+! 		dflt="$sysman"
+! 	fi
+! 	set dflt
+! 	eval $prefixup
+! 	;;
+! ' ') dflt=none;;
+! *)  dflt="$man1dir"
+! 	;;
+! esac
+! echo " "
+! fn=dn~
+! rp="Where do the main $spackage manual pages (source) go?"
+! . ./getfile
+! if test "X$man1direxp" != "X$ansexp"; then
+! 	installman1dir=''
+! fi
+! man1dir="$ans"
+! man1direxp="$ansexp"
+! case "$man1dir" in
+! '') man1dir=' '
+! 	installman1dir='';;
+! esac
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! manual pages reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installman1dir" in
+! 	'') dflt=`echo $man1direxp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installman1dir";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will man pages be installed?'
+! 	. ./getfile
+! 	installman1dir="$ans"
+! else
+! 	installman1dir="$man1direxp"
+! fi
+! 
+! : What suffix to use on installed man pages
+! 
+! case "$man1dir" in
+! ' ')
+! 	man1ext='0'
+! 	;;
+! *)
+! 	rp="What suffix should be used for the main $spackage man pages?"
+! 	case "$man1dir" in
+! 	*1)  dflt=1 ;;
+! 	*1p) dflt=1p ;;
+! 	*1pm) dflt=1pm ;;
+! 	*l) dflt=l;;
+! 	*n) dflt=n;;
+! 	*o) dflt=o;;
+! 	*p) dflt=p;;
+! 	*C) dflt=C;;
+! 	*L) dflt=L;;
+! 	*L1) dflt=L1;;
+! 	*) dflt=1;;
+! 	esac
+! 	. ./myread
+! 	man1ext="$ans"
+! 	;;
+! esac
+! 
+! : set up the script used to warn in case of inconsistency
+! cat <<'EOSC' >whoa
+! dflt=y
+! echo " "
+! echo "*** WHOA THERE!!! ***" >&4
+! echo "    The $hint value for \$$var on this machine was \"$was\"!" >&4
+! rp="    Keep the $hint value?"
+! . ./myread
+! case "$ans" in
+! y) td=$was; tu=$was;;
+! esac
+! EOSC
+! 
+! : function used to set $1 to $val
+! setvar='var=$1; eval "was=\$$1"; td=$define; tu=$undef;
+! case "$val$was" in
+! $define$undef) . ./whoa; eval "$var=\$td";;
+! $undef$define) . ./whoa; eval "$var=\$tu";;
+! *) eval "$var=$val";;
+! esac'
+! 
+! : see if we can have long filenames
+! echo " "
+! rmlist="$rmlist /tmp/cf$$"
+! $test -d /tmp/cf$$ || mkdir /tmp/cf$$
+! first=123456789abcdef
+! second=/tmp/cf$$/$first
+! $rm -f $first $second
+! if (echo hi >$first) 2>/dev/null; then
+! 	if $test -f 123456789abcde; then
+! 		echo 'You cannot have filenames longer than 14 characters.  Sigh.' >&4
+! 		val="$undef"
+! 	else
+! 		if (echo hi >$second) 2>/dev/null; then
+! 			if $test -f /tmp/cf$$/123456789abcde; then
+! 				$cat <<'EOM'
+! That's peculiar... You can have filenames longer than 14 characters, but only
+! on some of the filesystems.  Maybe you are using NFS.  Anyway, to avoid problems
+! I shall consider your system cannot support long filenames at all.
+! EOM
+! 				val="$undef"
+! 			else
+! 				echo 'You can have filenames longer than 14 characters.' >&4
+! 				val="$define"
+! 			fi
+! 		else
+! 			$cat <<'EOM'
+! How confusing! Some of your filesystems are sane enough to allow filenames
+! longer than 14 characters but some others like /tmp can't even think about them.
+! So, for now on, I shall assume your kernel does not allow them at all.
+! EOM
+! 			val="$undef"
+! 		fi
+! 	fi
+! else
+! 	$cat <<'EOM'
+! You can't have filenames longer than 14 chars.  You can't even think about them!
+! EOM
+! 	val="$undef"
+! fi 
+! set d_flexfnam
+! eval $setvar
+! $rm -rf /tmp/cf$$ 123456789abcde*
+! 
+! : determine where library module manual pages go
+! set man3dir man3dir none
+! eval $prefixit
+! $cat <<EOM
+! 
+! $spackage has manual pages for many of the library modules.
+! EOM
+! 
+! case "$nroff" in
+! nroff)
+! 	$cat <<'EOM'
+! However, you don't have nroff, so they're probably useless to you.
+! You can use the supplied perldoc script instead.
+! EOM
+! 	case "$man3dir" in
+! 	'') man3dir="none";;
+! 	esac;;
+! esac
+! 
+! case "$d_flexfnam" in
+! undef)
+! 	$cat <<'EOM'
+! However, your system can't handle the long file names like File::Basename.3. 
+! You can use the supplied perldoc script instead.
+! EOM
+! 	case "$man3dir" in
+! 	'') man3dir="none";;
+! 	esac;;
+! esac
+! 
+! echo "If you don't want the manual sources installed, answer 'none'."
+! case "$man3dir" in
+! '')	dflt="$privlib/man/man3" ;;
+! ' ') dflt=none;;
+! *)	dflt="$man3dir" ;;
+! esac
+! echo " "
+! 
+! fn=dn~
+! rp="Where do the $spackage library man pages (source) go?"
+! . ./getfile
+! if test "X$man3direxp" != "X$ansexp"; then
+! 	installman3dir=''
+! fi
+! 
+! man3dir="$ans"
+! man3direxp="$ansexp"
+! case "$man3dir" in
+! '') man3dir=' '
+! 	installman3dir='';;
+! esac
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! manual pages reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installman3dir" in
+! 	'') dflt=`echo $man3direxp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installman3dir";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will man pages be installed?'
+! 	. ./getfile
+! 	installman3dir="$ans"
+! else
+! 	installman3dir="$man3direxp"
+! fi
+! 
+! : What suffix to use on installed man pages
+! 
+! case "$man3dir" in
+! ' ')
+! 	man3ext='0'
+! 	;;
+! *)
+! 	rp="What suffix should be used for the $spackage library man pages?"
+! 	case "$man3dir" in
+! 	*3)  dflt=3 ;;
+! 	*3p) dflt=3p ;;
+! 	*3pm) dflt=3pm ;;
+! 	*l) dflt=l;;
+! 	*n) dflt=n;;
+! 	*o) dflt=o;;
+! 	*p) dflt=p;;
+! 	*C) dflt=C;;
+! 	*L) dflt=L;;
+! 	*L3) dflt=L3;;
+! 	*) dflt=3;;
+! 	esac
+! 	. ./myread
+! 	man3ext="$ans"
+! 	;;
+! esac
+! 
+! : see if we have to deal with yellow pages, now NIS.
+! if $test -d /usr/etc/yp || $test -d /etc/yp; then
+! 	if $test -f /usr/etc/nibindd; then
+! 		echo " "
+! 		echo "I'm fairly confident you're on a NeXT."
+! 		echo " "
+! 		rp='Do you get the hosts file via NetInfo?'
+! 		dflt=y
+! 		case "$hostcat" in
+! 		nidump*) ;;
+! 		'') ;;
+! 		*) dflt=n;;
+! 		esac
+! 		. ./myread
+! 		case "$ans" in
+! 		y*) hostcat='nidump hosts .';;
+! 		*)	case "$hostcat" in
+! 			nidump*) hostcat='';;
+! 			esac
+! 			;;
+! 		esac
+! 	fi
+! 	case "$hostcat" in
+! 	nidump*) ;;
+! 	*)
+! 		case "$hostcat" in
+! 		*ypcat*) dflt=y;;
+! 		'') if $contains '^\+' /etc/passwd >/dev/null 2>&1; then
+! 				dflt=y
+! 			else
+! 				dflt=n
+! 			fi;;
+! 		*) dflt=n;;
+! 		esac
+! 		echo " "
+! 		rp='Are you getting the hosts file via yellow pages?'
+! 		. ./myread
+! 		case "$ans" in
+! 		y*) hostcat='ypcat hosts';;
+! 		*) hostcat='cat /etc/hosts';;
+! 		esac
+! 		;;
+! 	esac
+! fi
+! 
+! : now get the host name
+! echo " "
+! echo "Figuring out host name..." >&4
+! case "$myhostname" in
+! '') cont=true
+! 	echo 'Maybe "hostname" will work...'
+! 	if tans=`sh -c hostname 2>&1` ; then
+! 		myhostname=$tans
+! 		phostname=hostname
+! 		cont=''
+! 	fi
+! 	;;
+! *) cont='';;
+! esac
+! if $test "$cont"; then
+! 	if ./xenix; then
+! 		echo 'Oh, dear.  Maybe "/etc/systemid" is the key...'
+! 		if tans=`cat /etc/systemid 2>&1` ; then
+! 			myhostname=$tans
+! 			phostname='cat /etc/systemid'
+! 			echo "Whadyaknow.  Xenix always was a bit strange..."
+! 			cont=''
+! 		fi
+! 	elif $test -r /etc/systemid; then
+! 		echo "(What is a non-Xenix system doing with /etc/systemid?)"
+! 	fi
+! fi
+! if $test "$cont"; then
+! 	echo 'No, maybe "uuname -l" will work...'
+! 	if tans=`sh -c 'uuname -l' 2>&1` ; then
+! 		myhostname=$tans
+! 		phostname='uuname -l'
+! 	else
+! 		echo 'Strange.  Maybe "uname -n" will work...'
+! 		if tans=`sh -c 'uname -n' 2>&1` ; then
+! 			myhostname=$tans
+! 			phostname='uname -n'
+! 		else
+! 			echo 'Oh well, maybe I can mine it out of whoami.h...'
+! 			if tans=`sh -c $contains' sysname $usrinc/whoami.h' 2>&1` ; then
+! 				myhostname=`echo "$tans" | $sed 's/^.*"\(.*\)"/\1/'`
+! 				phostname="sed -n -e '"'/sysname/s/^.*\"\\(.*\\)\"/\1/{'"' -e p -e q -e '}' <$usrinc/whoami.h"
+! 			else
+! 				case "$myhostname" in
+! 				'') echo "Does this machine have an identity crisis or something?"
+! 					phostname='';;
+! 				*)
+! 					echo "Well, you said $myhostname before..."
+! 					phostname='echo $myhostname';;
+! 				esac
+! 			fi
+! 		fi
+! 	fi
+! fi
+! : you do not want to know about this
+! set $myhostname
+! myhostname=$1
+! 
+! : verify guess
+! if $test "$myhostname" ; then
+! 	dflt=y
+! 	rp='Your host name appears to be "'$myhostname'".'" Right?"
+! 	. ./myread
+! 	case "$ans" in
+! 	y*) ;;
+! 	*) myhostname='';;
+! 	esac
+! fi
+! 
+! : bad guess or no guess
+! while $test "X$myhostname" = X ; do
+! 	dflt=''
+! 	rp="Please type the (one word) name of your host:"
+! 	. ./myread
+! 	myhostname="$ans"
+! done
+! 
+! : translate upper to lower if necessary
+! case "$myhostname" in
+! *[A-Z]*)
+! 	echo "(Normalizing case in your host name)"
+! 	myhostname=`echo $myhostname | ./tr '[A-Z]' '[a-z]'`
+! 	;;
+! esac
+! 
+! case "$myhostname" in
+! *.*)
+! 	dflt=`expr "X$myhostname" : "X[^.]*\(\..*\)"`
+! 	myhostname=`expr "X$myhostname" : "X\([^.]*\)\."`
+! 	echo "(Trimming domain name from host name--host name is now $myhostname)"
+! 	;;
+! *) case "$mydomain" in
+! 	'')
+! 		$hostcat >hosts
+! 		dflt=.`$awk "/[0-9].*$myhostname/ {for(i=2; i<=NF;i++) print \\\$i}" \
+! 			hosts | $sort | $uniq | \
+! 			$sed -n -e "s/$myhostname\.\([a-zA-Z_.]\)/\1/p"`
+! 		case "$dflt" in
+! 		.) echo "(You do not have fully-qualified names in /etc/hosts)"
+! 			tans=`./loc resolv.conf X /etc /usr/etc`
+! 			if $test -f "$tans"; then
+! 				echo "(Attempting domain name extraction from $tans)"
+! 				dflt=.`egrep '^domain' $tans | $sed 's/domain[ 	]*\(.*\)/\1/' \
+! 					| ./tr '[A-Z]' '[a-z]' 2>/dev/null`
+! 			fi
+! 			;;
+! 		esac
+! 		case "$dflt" in
+! 		.) echo "(No help from resolv.conf either -- attempting clever guess)"
+! 			dflt=.`sh -c domainname 2>/dev/null`
+! 			case "$dflt" in
+! 			'') dflt='.';;
+! 			.nis.*|.yp.*|.main.*) dflt=`echo $dflt | $sed -e 's/^\.[^.]*//'`;;
+! 			esac
+! 			;;
+! 		esac
+! 		case "$dflt" in
+! 		.) echo "(Lost all hope -- silly guess then)"
+! 			dflt='.uucp'
+! 			;;
+! 		esac
+! 		$rm -f hosts
+! 		;;
+! 	*) dflt="$mydomain";;
+! 	esac;;
+! esac
+! echo " "
+! rp="What is your domain name?"
+! . ./myread
+! tans="$ans"
+! case "$ans" in
+! '') ;;
+! .*) ;;
+! *) tans=".$tans";;
+! esac
+! mydomain="$tans"
+! 
+! : translate upper to lower if necessary
+! case "$mydomain" in
+! *[A-Z]*)
+! 	echo "(Normalizing case in your domain name)"
+! 	mydomain=`echo $mydomain | ./tr '[A-Z]' '[a-z]'`
+! 	;;
+! esac
+! 
+! : a little sanity check here
+! case "$phostname" in
+! '') ;;
+! *)
+! 	case `$phostname | ./tr '[A-Z]' '[a-z]'` in
+! 	$myhostname$mydomain|$myhostname) ;;
+! 	*)
+! 		case "$phostname" in
+! 		sed*)
+! 			echo "(That doesn't agree with your whoami.h file, by the way.)"
+! 			;;
+! 		*)
+! 			echo "(That doesn't agree with your $phostname command, by the way.)"
+! 			;;
+! 		esac
+! 	;;
+! 	esac
+! 	;;
+! esac
+! 
+! $cat <<EOM
+! 
+! I need to get your e-mail address in Internet format if possible, i.e.
+! something like user@host.domain. Please answer accurately since I have
+! no easy means to double check it. The default value provided below
+! is most probably close to the reality but may not be valid from outside
+! your organization...
+! 
+! EOM
+! cont=x
+! while test "$cont"; do
+! 	case "$cf_email" in
+! 	'') dflt="$cf_by@$myhostname$mydomain";;
+! 	*) dflt="$cf_email";;
+! 	esac
+! 	rp='What is your e-mail address?'
+! 	. ./myread
+! 	cf_email="$ans"
+! 	case "$cf_email" in
+! 	*@*.*) cont='' ;;
+! 	*)
+! 		rp='Address does not look like an Internet one.  Use it anyway?'
+! 		case "$fastread" in
+! 		yes) dflt=y ;;
+! 		*) dflt=n ;;
+! 		esac
+! 		. ./myread
+! 		case "$ans" in
+! 		y*) cont='' ;;
+! 		*) echo " " ;;
+! 		esac
+! 		;;
+! 	esac
+! done
+! 
+! $cat <<EOM
+! 
+! If you or somebody else will be maintaining perl at your site, please
+! fill in the correct e-mail address here so that they may be contacted
+! if necessary. Currently, the "perlbug" program included with perl
+! will send mail to this address in addition to perlbug@perl.com. You may
+! enter "none" for no administrator.
+! 
+! EOM
+! case "$perladmin" in
+! '') dflt="$cf_email";;
+! *) dflt="$perladmin";;
+! esac
+! rp='Perl administrator e-mail address'
+! . ./myread
+! perladmin="$ans"
+! 
+! 
+! : determine optimize, if desired, or use for debug flag also
+! case "$optimize" in
+! ' ') dflt='none';;
+! '') dflt='-O';;
+! *) dflt="$optimize";;
+! esac
+! $cat <<EOH
+! 
+! Some C compilers have problems with their optimizers, by default, $package
+! compiles with the -O flag to use the optimizer.  Alternately, you might want
+! to use the symbolic debugger, which uses the -g flag (on traditional Unix
+! systems).  Either flag can be specified here.  To use neither flag, specify
+! the word "none".
+! 
+! EOH
+! rp="What optimizer/debugger flag should be used?"
+! . ./myread
+! optimize="$ans"
+! case "$optimize" in
+! 'none') optimize=" ";;
+! esac
+! 
+! dflt=''
+! case "$ccflags" in
+! '')	
+! 	case "$gccversion" in
+! 	1*) dflt='-fpcc-struct-return' ;;
+! 	esac
+! 	case "$optimize" in
+! 	*-g*) dflt="$dflt -DDEBUGGING";;
+! 	esac
+! 	case "$gccversion" in
+! 	2*) if test -d /etc/conf/kconfig.d &&
+! 			$contains _POSIX_VERSION $usrinc/sys/unistd.h >/dev/null 2>&1
+! 		then
+! 			dflt="$dflt -posix"
+! 		fi
+! 		;;
+! 	esac
+! 	;;
+! esac
+! 
+! case "$mips_type" in
+! *BSD*|'') inclwanted="$locincpth $usrinc";;
+! *) inclwanted="$locincpth $inclwanted $usrinc/bsd";;
+! esac
+! for thisincl in $inclwanted; do
+! 	if $test -d $thisincl; then
+! 		if $test x$thisincl != x$usrinc; then
+! 			case "$dflt" in
+! 			*$thisincl*);;
+! 			*) dflt="$dflt -I$thisincl";;
+! 			esac
+! 		fi
+! 	fi
+! done
+! 
+! inctest='if $contains $2 $usrinc/$1 >/dev/null 2>&1; then
+! 	xxx=true;
+! elif $contains $2 $usrinc/sys/$1 >/dev/null 2>&1; then
+! 	xxx=true;
+! else
+! 	xxx=false;
+! fi;
+! if $xxx; then
+! 	case "$dflt" in
+! 	*$2*);;
+! 	*) dflt="$dflt -D$2";;
+! 	esac;
+! fi'
+! 
+! if ./osf1; then
+! 	set signal.h __LANGUAGE_C__; eval $inctest
+! else
+! 	set signal.h LANGUAGE_C; eval $inctest
+! fi
+! set signal.h NO_PROTOTYPE; eval $inctest
+! set signal.h _NO_PROTO; eval $inctest
+! 
+! case "$dflt" in
+! '') dflt=none;;
+! esac
+! case "$ccflags" in
+! '') ;;
+! *) dflt="$ccflags";;
+! esac
+! $cat <<EOH
+! 
+! Your C compiler may want other flags.  For this question you should include
+! -I/whatever and -DWHATEVER flags and any other flags used by the C compiler,
+! but you should NOT include libraries or ld flags like -lwhatever.  If you
+! want $package to honor its debug switch, you should include -DDEBUGGING here.
+! Your C compiler might also need additional flags, such as -D_POSIX_SOURCE,
+! -DHIDEMYMALLOC or -DCRIPPLED_CC.
+! 
+! To use no flags, specify the word "none".
+! 
+! EOH
+! set X $dflt
+! shift
+! dflt=${1+"$@"}
+! rp="Any additional cc flags?"
+! . ./myread
+! case "$ans" in
+! none) ccflags='';;
+! *) ccflags="$ans";;
+! esac
+! 
+! : the following weeds options from ccflags that are of no interest to cpp
+  cppflags="$ccflags"
+  case "$gccversion" in
+  1*) cppflags="$cppflags -D__GNUC__"
+***************
+*** 2750,2755 ****
+--- 3668,3674 ----
+  esac
+  
+  : flags used in final linking phase
++ 
+  case "$ldflags" in
+  '') if ./venix; then
+  		dflt='-i -z'
+***************
+*** 2759,2771 ****
+  	case "$ccflags" in
+  	*-posix*) dflt="$dflt -posix" ;;
+  	esac
+- 	case "$dflt" in
+- 	'') dflt='none' ;;
+- 	esac
+  	;;
+  *) dflt="$ldflags";;
+  esac
+! echo " "
+  rp="Any additional ld flags (NOT including libraries)?"
+  . ./myread
+  case "$ans" in
+--- 3678,3717 ----
+  	case "$ccflags" in
+  	*-posix*) dflt="$dflt -posix" ;;
+  	esac
+  	;;
+  *) dflt="$ldflags";;
+  esac
+! 
+! : Try to guess additional flags to pick up local libraries.
+! for thislibdir in $libpth; do
+! 	case " $loclibpth " in
+! 	*" $thislibdir "*)
+! 		case "$dflt " in 
+! 		"-L$thislibdir ") ;;
+! 		*)  dflt="$dflt -L$thislibdir" ;;
+! 		esac
+! 		;;
+! 	esac
+! done
+! 
+! case "$dflt" in
+! '') dflt='none' ;;
+! esac
+! 
+! $cat <<EOH
+! 
+! Your C linker may need flags.  For this question you should
+! include -L/whatever and any other flags used by the C linker, but you
+! should NOT include libraries like -lwhatever.
+! 
+! Make sure you include the appropriate -L/path flags if your C linker
+! does not normally search all of the directories you specified above,
+! namely
+! 	$libpth
+! To use no flags, specify the word "none".
+! 
+! EOH
+! 
+  rp="Any additional ld flags (NOT including libraries)?"
+  . ./myread
+  case "$ans" in
+***************
+*** 2777,2783 ****
+  : coherency check
+  echo " "
+  echo "Checking your choice of C compiler and flags for coherency..." >&4
+! set X $cc $optimize $ccflags try.c -o try $ldflags
+  shift
+  $cat >try.msg <<EOM
+  I've tried to compile and run a simple program with:
+--- 3723,3729 ----
+  : coherency check
+  echo " "
+  echo "Checking your choice of C compiler and flags for coherency..." >&4
+! set X $cc $optimize $ccflags $ldflags try.c -o try
+  shift
+  $cat >try.msg <<EOM
+  I've tried to compile and run a simple program with:
+***************
+*** 2819,2878 ****
+  	. ./myread
+  	case "$ans" in
+  	n*|N*) ;;
+! 	*)	echo "Ok.  Stopping Configure." >&4
+! 		exit 1
+! 		;;
+! 	esac
+! 	;;
+! n) echo "OK, that should do.";;
+! esac
+! $rm -f try try.* core
+! 
+! : Set private lib path
+! case "$plibpth" in
+! '') if ./mips; then
+! 		plibpth="$incpath/usr/lib /usr/local/lib /usr/ccs/lib"
+! 	fi;;
+! esac
+! case "$libpth" in
+! ' ') dlist='';;
+! '') dlist="$plibpth $glibpth";;
+! *) dlist="$libpth";;
+! esac
+! 
+! : Now check and see which directories actually exist, avoiding duplicates
+! libpth=''
+! for xxx in $dlist
+! do
+!     if $test -d $xxx; then
+! 		case " $libpth " in
+! 		*" $xxx "*) ;;
+! 		*) libpth="$libpth $xxx";;
+! 		esac
+!     fi
+! done
+! $cat <<'EOM'
+! 
+! Some systems have incompatible or broken versions of libraries.  Among
+! the directories listed in the question below, please remove any you
+! know not to be holding relevant libraries, and add any that are needed.
+! Say "none" for none.
+! 
+! EOM
+! case "$libpth" in
+! '') dflt='none';;
+! *)
+! 	set X $libpth
+! 	shift
+! 	dflt=${1+"$@"}
+! 	;;
+! esac
+! rp="Directories to use for library searches?"
+! . ./myread
+! case "$ans" in
+! none) libpth=' ';;
+! *) libpth="$ans";;
+  esac
+  
+  : compute shared library extension
+  case "$so" in
+--- 3765,3778 ----
+  	. ./myread
+  	case "$ans" in
+  	n*|N*) ;;
+! 	*)	echo "Ok.  Stopping Configure." >&4
+! 		exit 1
+! 		;;
+! 	esac
+! 	;;
+! n) echo "OK, that should do.";;
+  esac
++ $rm -f try try.* core
+  
+  : compute shared library extension
+  case "$so" in
+***************
+*** 2926,2931 ****
+--- 3826,3837 ----
+  		*"-l$thislib "*);;
+  		*) dflt="$dflt -l$thislib";;
+  		esac
++ 	elif xxx=`./loc $thislib.a X $libpth`; $test -f "$xxx"; then
++ 		echo "Found -l$thislib."
++ 		case " $dflt " in
++ 		*"-l$thislib "*);;
++ 		*) dflt="$dflt -l$thislib";;
++ 		esac
+  	elif xxx=`./loc lib${thislib}_s.a X $libpth`; $test -f "$xxx"; then
+  		echo "Found -l${thislib}_s."
+  		case " $dflt " in
+***************
+*** 3218,3223 ****
+--- 4124,4133 ----
+  	eval $xscan;\
+  	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
+  		eval $xrun
++ elif com="$sed -n -e 's/^[-0-9a-f ]*_\(.*\)=.*/\1/p'";\
++ 	eval $xscan;\
++ 	$contains '^fprintf$' libc.list >/dev/null 2>&1; then
++ 		eval $xrun
+  else
+  	nm -p $* 2>/dev/null >libc.tmp
+  	$grep fprintf libc.tmp > libc.ptf
+***************
+*** 3268,3274 ****
+  csym='tlook=$1;
+  case "$3" in
+  -v) tf=libc.tmp; tc=""; tdc="";;
+! -a) tf=libc.tmp; tc="[0]"; tdc=[];;
+  *) tlook="^$1\$"; tf=libc.list; tc="()"; tdc="()";;
+  esac;
+  tx=yes;
+--- 4178,4184 ----
+  csym='tlook=$1;
+  case "$3" in
+  -v) tf=libc.tmp; tc=""; tdc="";;
+! -a) tf=libc.tmp; tc="[0]"; tdc="[]";;
+  *) tlook="^$1\$"; tf=libc.list; tc="()"; tdc="()";;
+  esac;
+  tx=yes;
+***************
+*** 3286,3292 ****
+  		fi;;
+  	*)
+  		echo "main() { extern short $1$tdc; printf(\"%hd\", $1$tc); }" > t.c;
+! 		if $cc $ccflags -o t t.c $ldflags $libs >/dev/null 2>&1;
+  		then tval=true;
+  		else tval=false;
+  		fi;
+--- 4196,4202 ----
+  		fi;;
+  	*)
+  		echo "main() { extern short $1$tdc; printf(\"%hd\", $1$tc); }" > t.c;
+! 		if $cc $ccflags $ldflags -o t t.c $libs >/dev/null 2>&1;
+  		then tval=true;
+  		else tval=false;
+  		fi;
+***************
+*** 3300,3318 ****
+  esac;
+  eval "$2=$tval"'
+  
+- : set up the script used to warn in case of inconsistency
+- cat <<'EOSC' >whoa
+- dflt=y
+- echo " "
+- echo "*** WHOA THERE!!! ***" >&4
+- echo "    The $hint value for \$$var on this machine was \"$was\"!" >&4
+- rp="    Keep the $hint value?"
+- . ./myread
+- case "$ans" in
+- y) td=$was; tu=$was;;
+- esac
+- EOSC
+- 
+  : define an is-in-libc? function
+  inlibc='echo " "; td=$define; tu=$undef;
+  sym=$1; var=$2; eval "was=\$$2";
+--- 4210,4215 ----
+***************
+*** 3340,3406 ****
+  	esac;;
+  esac'
+  
+! : see if gconvert exists
+! : On some SVR4 systems, gconvert is present but can not be used 
+! : because it requires some other unavailable functions.
+! : Therefore, do not use the nm extraction, but use a real compile
+! : and link test instead.
+! xxx_runnm="$runnm"
+! runnm=false
+! set gconvert d_gconvert
+! eval $inlibc
+! runnm="$xxx_runnm"
+! 
+! case "$d_gconvert" in
+! $define)
+! 	echo "We'll use it to convert floats into a string then." >&4
+! 	d_Gconvert="gconvert((x),(n),(t),(b))"
+! 	;;
+! *)
+! 	: Maybe we can emulate it with gcvt.
+! 	set gcvt d_gcvt
+! 	eval $inlibc
+! 
+! 	case "$d_gcvt" in
+! 	$define) 
+! 		: Test whether gcvt drops a trailing decimal point
+! 		$cat >try.c <<'EOP'
+  main() { 
+  	char buf[64]; 
+! 	gcvt(1.0, 8, buf); 
+  	if (buf[0] != '1' || buf[1] != '\0')
+  		exit(1);
+! 	gcvt(0.0, 8, buf); 
+  	if (buf[0] != '0' || buf[1] != '\0')
+  		exit(1);
+! 	gcvt(-1.0, 8, buf); 
+  	if (buf[0] != '-' || buf[1] != '1' || buf[2] != '\0')
+  		exit(1);
+  	exit(0);
+  }
+  EOP
+! 		if $cc $ccflags $ldflags -o try try.c $libs > /dev/null 2>&1; then
+! 			if ./try; then
+! 				echo "Good, your gcvt() drops a trailing decimal point."
+! 				echo "We'll use it to convert floats into a string." >&4
+! 				d_Gconvert="gcvt((x),(n),(b))"
+! 			else
+! 				echo "But your gcvt() keeps a trailing decimal point".
+! 				d_Gconvert=''
+! 			fi
+  		else
+! 			echo "Hmm.  I can't compile the gcvt test program."
+! 			d_Gconvert=''
+  		fi
+! 		$rm -f try.c try
+! 		;;
+! 	esac
+! 	case "$d_Gconvert" in
+! 	'')
+! 		echo "I'll use sprintf instead to convert floats into a string." >&4
+! 		d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+! 		;;
+! 	esac
+  esac
+  
+  : Initialize h_fcntl
+--- 4237,4298 ----
+  	esac;;
+  esac'
+  
+! : Check how to convert floats to strings.
+! echo " "
+! echo "Checking for an efficient way to convert floats to strings."
+! $cat >try.c <<'EOP'
+! #ifdef TRY_gconvert
+! #define Gconvert(x,n,t,b) gconvert((x),(n),(t),(b))
+! #endif
+! #ifdef TRY_gcvt
+! #define Gconvert(x,n,t,b) gcvt((x),(n),(b))
+! #endif
+! #ifdef TRY_sprintf
+! #define Gconvert(x,n,t,b) sprintf((b),"%.*g",(n),(x))
+! #endif
+  main() { 
+  	char buf[64]; 
+! 	Gconvert(1.0, 8, 0, buf); 
+  	if (buf[0] != '1' || buf[1] != '\0')
+  		exit(1);
+! 	Gconvert(0.0, 8, 0, buf); 
+  	if (buf[0] != '0' || buf[1] != '\0')
+  		exit(1);
+! 	Gconvert(-1.0, 8, 0, buf); 
+  	if (buf[0] != '-' || buf[1] != '1' || buf[2] != '\0')
+  		exit(1);
+  	exit(0);
+  }
+  EOP
+! case "$d_Gconvert" in
+! gconvert*) xxx_list='gconvert gcvt sprintf' ;;
+! gcvt*) xxx_list='gcvt gconvert sprintf' ;;
+! sprintf*) xxx_list='sprintf gconvert gcvt' ;;
+! *) xxx_list='gconvert gcvt sprintf' ;;
+! esac
+! 
+! for xxx_convert in $xxx_list; do
+! 	echo "Trying $xxx_convert"
+! 	$rm -f try try.o
+! 	if $cc $ccflags -DTRY_$xxx_convert $ldflags -o try \
+! 		try.c $libs > /dev/null 2>&1 ; then
+! 		echo "$xxx_convert" found. >&4
+! 		if ./try; then
+! 			echo "Good, $xxx_convert drops a trailing decimal point."
+! 			echo "I'll use $xxx_convert to convert floats into a string." >&4
+! 			break;
+  		else
+! 			echo "But $xxx_convert keeps a trailing decimal point".
+  		fi
+! 	else
+! 		echo "$xxx_convert NOT found." >&4
+! 	fi
+! done
+! 		
+! case "$xxx_convert" in
+! gconvert) d_Gconvert='gconvert((x),(n),(t),(b))' ;;
+! gcvt) d_Gconvert='gcvt((x),(n),(b))' ;;
+! *) d_Gconvert='sprintf((b),"%.*g",(n),(x))' ;;
+  esac
+  
+  : Initialize h_fcntl
+***************
+*** 3442,3728 ****
+  esac
+  echo "Your cpp writes the filename in the $pos field of the line."
+  
+! : locate header file
+! $cat >findhdr <<EOF
+! $startsh
+! wanted=\$1
+! name=''
+! if test -f $usrinc/\$wanted; then
+! 	echo "$usrinc/\$wanted"
+! 	exit 0
+! fi
+! awkprg='{ print \$$fieldn }'
+! echo "#include <\$wanted>" > foo\$\$.c
+! $cppstdin $cppminus $cppflags < foo\$\$.c 2>/dev/null | \
+! $grep "^[ 	]*#.*\$wanted" | \
+! while read cline; do
+! 	name=\`echo \$cline | $awk "\$awkprg" | $tr -d '"'\`
+! 	case "\$name" in
+! 	*/\$wanted) echo "\$name"; exit 0;;
+! 	*) name='';;
+! 	esac;
+! done;
+! $rm -f foo\$\$.c;
+! case "\$name" in
+! '') exit 1;;
+! esac
+! EOF
+! chmod +x findhdr
+! 
+! : access call always available on UNIX
+! set access d_access
+! eval $inlibc
+! 
+! : locate the flags for 'access()'
+! case "$d_access" in
+! "$define")
+! 	echo " "
+! 	$cat >access.c <<'EOCP'
+! #include <sys/types.h>
+! #ifdef I_FCNTL
+! #include <fcntl.h>
+! #endif
+! #ifdef I_SYS_FILE
+! #include <sys/file.h>
+! #endif
+! #ifdef I_UNISTD
+! #include <unistd.h>
+! #endif
+! main() {
+! 	exit(R_OK);
+! }
+! EOCP
+! 	: check sys/file.h first, no particular reason here
+! 	if $test `./findhdr sys/file.h` && \
+! 		$cc $cppflags -DI_SYS_FILE access.c -o access >/dev/null 2>&1 ; then
+! 		h_sysfile=true;
+! 		echo "<sys/file.h> defines the *_OK access constants." >&4
+! 	elif $test `./findhdr fcntl.h` && \
+! 		$cc $cppflags -DI_FCNTL access.c -o access >/dev/null 2>&1 ; then
+! 		h_fcntl=true;
+! 		echo "<fcntl.h> defines the *_OK access constants." >&4
+! 	elif $test `./findhdr unistd.h` && \
+! 		$cc $cppflags -DI_UNISTD access.c -o access >/dev/null 2>&1 ; then
+! 		echo "<unistd.h> defines the *_OK access constants." >&4
+! 	else
+! 		echo "I can't find the four *_OK access constants--I'll use mine." >&4
+! 	fi
+! 	;;
+! esac
+! $rm -f access*
+! 
+! : see if alarm exists
+! set alarm d_alarm
+! eval $inlibc
+! 
+! : determine the architecture name
+! echo " "
+! if xxx=`./loc arch blurfl $pth`; $test -f "$xxx"; then
+! 	tarch=`arch`"-$osname"
+! elif xxx=`./loc uname blurfl $pth`; $test -f "$xxx" ; then
+! 	if uname -m > tmparch 2>&1 ; then
+! 		tarch=`$sed -e 's/ /_/g' -e 's/$/'"-$osname/" tmparch`
+! 	else
+! 		tarch="$osname"
+! 	fi
+! 	$rm -f tmparch
+! else
+! 	tarch="$osname"
+! fi
+! case "$myarchname" in
+! ''|"$tarch") ;;
+! *)
+! 	echo "(Your architecture name used to be $myarchname.)"
+! 	archname=''
+! 	;;
+! esac
+! case "$archname" in
+! '') dflt="$tarch";;
+! *) dflt="$archname";;
+! esac
+! rp='What is your architecture name'
+! . ./myread
+! archname="$ans"
+! myarchname="$tarch"
+! 
+! : is AFS running?
+! echo " "
+! if test -d /afs; then
+! 	echo "AFS may be running... I'll be extra cautious then..." >&4
+! 	afs=true
+! else
+! 	echo "AFS does not seem to be running..." >&4
+! 	afs=false
+! fi
+! 
+! : determine root of directory hierarchy where package will be installed.
+! case "$prefix" in
+! '')
+! 	dflt=`./loc . /usr/local /usr/local /local /opt /usr`
+! 	;;
+! *)
+! 	dflt="$prefix"
+! 	;;
+! esac
+! $cat <<EOM
+! 
+! By default, $package will be installed in $dflt/bin, manual
+! pages under $dflt/man, etc..., i.e. with $dflt as prefix for
+! all installation directories. Typically set to /usr/local, but you
+! may choose /usr if you wish to install $package among your system
+! binaries. If you wish to have binaries under /bin but manual pages
+! under /usr/local/man, that's ok: you will be prompted separately
+! for each of the installation directories, the prefix being only used
+! to set the defaults.
+! 
+! EOM
+! fn=d~
+! rp='Installation prefix to use?'
+! . ./getfile
+! oldprefix=''
+! case "$prefix" in
+! '') ;;
+! *)
+! 	case "$ans" in
+! 	"$prefix") ;;
+! 	*) oldprefix="$prefix";;
+! 	esac
+! 	;;
+! esac
+! prefix="$ans"
+! prefixexp="$ansexp"
+! 
+! : set the prefixit variable, to compute a suitable default value
+! prefixit='case "$3" in
+! ""|none)
+! 	case "$oldprefix" in
+! 	"") eval "$1=\"\$$2\"";;
+! 	*)
+! 		case "$3" in
+! 		"") eval "$1=";;
+! 		none)
+! 			eval "tp=\"\$$2\"";
+! 			case "$tp" in
+! 			""|" ") eval "$1=\"\$$2\"";;
+! 			*) eval "$1=";;
+! 			esac;;
+! 		esac;;
+! 	esac;;
+! *)
+! 	eval "tp=\"$oldprefix-\$$2-\""; eval "tp=\"$tp\"";
+! 	case "$tp" in
+! 	--|/*--|\~*--) eval "$1=\"$prefix/$3\"";;
+! 	/*-$oldprefix/*|\~*-$oldprefix/*)
+! 		eval "$1=\`echo \$$2 | sed \"s,^$oldprefix,$prefix,\"\`";;
+! 	*) eval "$1=\"\$$2\"";;
+! 	esac;;
+! esac'
+! 
+! : determine where private executables go
+! set dflt privlib lib/$package
+! eval $prefixit
+! $cat <<EOM
+! 
+! There are some auxiliary files for $package that need to be put into a
+! private library directory that is accessible by everyone.
+! 
+! EOM
+! fn=d~+
+! rp='Pathname where the private library files will reside?'
+! . ./getfile
+! if $test "X$privlibexp" != "X$ansexp"; then
+! 	installprivlib=''
+! fi
+! privlib="$ans"
+! privlibexp="$ansexp"
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installprivlib" in
+! 	'') dflt=`echo $privlibexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installprivlib";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will private files be installed?'
+! 	. ./getfile
+! 	installprivlib="$ans"
+! else
+! 	installprivlib="$privlibexp"
+  fi
+  
+! : set the prefixup variable, to restore leading tilda escape
+! prefixup='case "$prefixexp" in
+! "$prefix") ;;
+! *) eval "$1=\`echo \$$1 | sed \"s,^$prefixexp,$prefix,\"\`";;
+! esac'
+  
+! : determine where public architecture dependent libraries go
+! set archlib archlib
+! eval $prefixit
+! case "$archlib" in
+! '')
+! 	case "$privlib" in
+! 	'')
+! 		dflt=`./loc . "." $prefixexp/lib /usr/local/lib /usr/lib /lib`
+! 		set dflt
+! 		eval $prefixup
+! 		;;
+! 	*)  dflt="$privlib/$archname";;
+! 	esac
+  	;;
+- *) dflt="$archlib";;
+  esac
+! cat <<EOM
+! 
+! $spackage contains architecture-dependent library files.  If you are
+! sharing libraries in a heterogeneous environment, you might store
+! these files in a separate location.  Otherwise, you can just include
+! them with the rest of the public library files.
+! 
+! EOM
+! fn=d~
+! rp='Where do you want to put the public architecture-dependent libraries?'
+! . ./getfile
+! archlib="$ans"
+! archlibexp="$ansexp"
+! 
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installarchlib" in
+! 	'') dflt=`echo $archlibexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installarchlib";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will architecture-dependent library files be installed?'
+! 	. ./getfile
+! 	installarchlib="$ans"
+! else
+! 	installarchlib="$archlibexp"
+! fi
+! if $test X"$archlib" = X"$privlib"; then
+! 	d_archlib="$undef"
+! else
+! 	d_archlib="$define"
+! fi
+  
+! : function used to set $1 to $val
+! setvar='var=$1; eval "was=\$$1"; td=$define; tu=$undef;
+! case "$val$was" in
+! $define$undef) . ./whoa; eval "$var=\$td";;
+! $undef$define) . ./whoa; eval "$var=\$tu";;
+! *) eval "$var=$val";;
+! esac'
+  
+  : Look for GNU-cc style attribute checking
+  echo " "
+--- 4334,4411 ----
+  esac
+  echo "Your cpp writes the filename in the $pos field of the line."
+  
+! : locate header file
+! $cat >findhdr <<EOF
+! $startsh
+! wanted=\$1
+! name=''
+! if test -f $usrinc/\$wanted; then
+! 	echo "$usrinc/\$wanted"
+! 	exit 0
+  fi
++ awkprg='{ print \$$fieldn }'
++ echo "#include <\$wanted>" > foo\$\$.c
++ $cppstdin $cppminus $cppflags < foo\$\$.c 2>/dev/null | \
++ $grep "^[ 	]*#.*\$wanted" | \
++ while read cline; do
++ 	name=\`echo \$cline | $awk "\$awkprg" | $tr -d '"'\`
++ 	case "\$name" in
++ 	*/\$wanted) echo "\$name"; exit 0;;
++ 	*) name='';;
++ 	esac;
++ done;
++ $rm -f foo\$\$.c;
++ case "\$name" in
++ '') exit 1;;
++ esac
++ EOF
++ chmod +x findhdr
+  
+! : access call always available on UNIX
+! set access d_access
+! eval $inlibc
+  
+! : locate the flags for 'access()'
+! case "$d_access" in
+! "$define")
+! 	echo " "
+! 	$cat >access.c <<'EOCP'
+! #include <sys/types.h>
+! #ifdef I_FCNTL
+! #include <fcntl.h>
+! #endif
+! #ifdef I_SYS_FILE
+! #include <sys/file.h>
+! #endif
+! #ifdef I_UNISTD
+! #include <unistd.h>
+! #endif
+! main() {
+! 	exit(R_OK);
+! }
+! EOCP
+! 	: check sys/file.h first, no particular reason here
+! 	if $test `./findhdr sys/file.h` && \
+! 		$cc $cppflags -DI_SYS_FILE access.c -o access >/dev/null 2>&1 ; then
+! 		h_sysfile=true;
+! 		echo "<sys/file.h> defines the *_OK access constants." >&4
+! 	elif $test `./findhdr fcntl.h` && \
+! 		$cc $cppflags -DI_FCNTL access.c -o access >/dev/null 2>&1 ; then
+! 		h_fcntl=true;
+! 		echo "<fcntl.h> defines the *_OK access constants." >&4
+! 	elif $test `./findhdr unistd.h` && \
+! 		$cc $cppflags -DI_UNISTD access.c -o access >/dev/null 2>&1 ; then
+! 		echo "<unistd.h> defines the *_OK access constants." >&4
+! 	else
+! 		echo "I can't find the four *_OK access constants--I'll use mine." >&4
+! 	fi
+  	;;
+  esac
+! $rm -f access*
+  
+! : see if alarm exists
+! set alarm d_alarm
+! eval $inlibc
+  
+  : Look for GNU-cc style attribute checking
+  echo " "
+***************
+*** 3775,3781 ****
+  	exit(0);
+  }
+  EOP
+! 	if $cc $ccflags -o set set.c $ldflags $libs >/dev/null 2>&1; then
+  		./set 2>/dev/null
+  		case $? in
+  		0) echo "You have to use setpgrp() instead of setpgrp(pid, pgrp)." >&4
+--- 4458,4464 ----
+  	exit(0);
+  }
+  EOP
+! 	if $cc $ccflags $ldflags -o set set.c $libs >/dev/null 2>&1; then
+  		./set 2>/dev/null
+  		case $? in
+  		0) echo "You have to use setpgrp() instead of setpgrp(pid, pgrp)." >&4
+***************
+*** 3814,3835 ****
+  main()
+  {
+  	printf("%d\n", sizeof(int));
+  }
+  EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 ; then
+! 		dflt=`./try`
+  	else
+  		dflt='4'
+  		echo "(I can't seem to compile the test program.  Guessing...)"
+  	fi
+  	;;
+- *)
+- 	dflt="$intsize"
+- 	;;
+  esac
+- rp="What is the size of an integer (in bytes)?"
+- . ./myread
+- intsize="$ans"
+  $rm -f try.c try
+  
+  : see if signal is declared as pointer to function returning int or void
+--- 4497,4516 ----
+  main()
+  {
+  	printf("%d\n", sizeof(int));
++ 	exit(0);
+  }
+  EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+! 		intsize=`./try`
+  	else
+  		dflt='4'
+  		echo "(I can't seem to compile the test program.  Guessing...)"
++ 		rp="What is the size of an integer (in bytes)?"
++ 		. ./myread
++ 		intsize="$ans"
+  	fi
+  	;;
+  esac
+  $rm -f try.c try
+  
+  : see if signal is declared as pointer to function returning int or void
+***************
+*** 4253,4261 ****
+  $rm -f try.c
+  
+  : see if dlerror exists
+- : On NetBSD and FreeBSD, dlerror might be available, but it is in 
+- : /usr/lib/crt0.o, not in any of the libraries.  Therefore, do not
+- : use the nm extraction, but use a real compile and link test instead.
+  xxx_runnm="$runnm"
+  runnm=false
+  set dlerror d_dlerror
+--- 4934,4939 ----
+***************
+*** 4267,4275 ****
+  eval $inhdr
+  
+  : see if dlopen exists
+- : On NetBSD and FreeBSD, dlopen is available, but it is in 
+- : /usr/lib/crt0.o, not in any of the libraries.  Therefore, do not
+- : use the nm extraction, but use a real compile and link test instead.
+  xxx_runnm="$runnm"
+  runnm=false
+  set dlopen d_dlopen
+--- 4945,4950 ----
+***************
+*** 4420,4425 ****
+--- 5095,5117 ----
+  			;;
+      *) dflt="$lddlflags" ;;
+      esac
++ 
++ : Try to guess additional flags to pick up local libraries.
++ for thisflag in $ldflags; do
++ 	case "$thisflag" in
++ 	-L*)
++ 		case " $dflt " in
++ 		*" $thisflag "*) ;;
++ 		*) dflt="$dflt $thisflag" ;;
++ 		esac
++ 		;;
++ 	esac
++ done
++ 
++ case "$dflt" in
++ '') dflt='none' ;;
++ esac
++ 
+      rp="Any special flags to pass to $ld to create a dynamically loaded library?"
+      . ./myread
+      case "$ans" in
+***************
+*** 4736,4784 ****
+  set fgetpos d_fgetpos
+  eval $inlibc
+  
+- : see if we can have long filenames
+- echo " "
+- rmlist="$rmlist /tmp/cf$$"
+- $test -d /tmp/cf$$ || mkdir /tmp/cf$$
+- first=123456789abcdef
+- second=/tmp/cf$$/$first
+- $rm -f $first $second
+- if (echo hi >$first) 2>/dev/null; then
+- 	if $test -f 123456789abcde; then
+- 		echo 'You cannot have filenames longer than 14 characters.  Sigh.' >&4
+- 		val="$undef"
+- 	else
+- 		if (echo hi >$second) 2>/dev/null; then
+- 			if $test -f /tmp/cf$$/123456789abcde; then
+- 				$cat <<'EOM'
+- That's peculiar... You can have filenames longer than 14 characters, but only
+- on some of the filesystems.  Maybe you are using NFS.  Anyway, to avoid problems
+- I shall consider your system cannot support long filenames at all.
+- EOM
+- 				val="$undef"
+- 			else
+- 				echo 'You can have filenames longer than 14 characters.' >&4
+- 				val="$define"
+- 			fi
+- 		else
+- 			$cat <<'EOM'
+- How confusing! Some of your filesystems are sane enough to allow filenames
+- longer than 14 characters but some others like /tmp can't even think about them.
+- So, for now on, I shall assume your kernel does not allow them at all.
+- EOM
+- 			val="$undef"
+- 		fi
+- 	fi
+- else
+- 	$cat <<'EOM'
+- You can't have filenames longer than 14 chars.  You can't even think about them!
+- EOM
+- 	val="$undef"
+- fi 
+- set d_flexfnam
+- eval $setvar
+- $rm -rf /tmp/cf$$ 123456789abcde*
+- 
+  : see if flock exists
+  set flock d_flock
+  eval $inlibc
+--- 5428,5433 ----
+***************
+*** 5304,5310 ****
+  exit(0);
+  }
+  EOCP
+! 	if $cc foo.c -o safebcpy $ccflags $ldflags $libs >/dev/null 2>&1 ; then
+  		if ./safebcpy 2>/dev/null; then
+  			echo "Yes, it can."
+  			val="$define"
+--- 5953,5959 ----
+  exit(0);
+  }
+  EOCP
+! 	if $cc $ccflags $ldflags foo.c -o safebcpy $libs >/dev/null 2>&1; then
+  		if ./safebcpy 2>/dev/null; then
+  			echo "Yes, it can."
+  			val="$define"
+***************
+*** 5352,5358 ****
+  exit(0);
+  }
+  EOCP
+! 	if $cc foo.c -o safemcpy $ccflags $ldflags $libs >/dev/null 2>&1 ; then
+  		if ./safemcpy 2>/dev/null; then
+  			echo "Yes, it can."
+  			val="$define"
+--- 6001,6007 ----
+  exit(0);
+  }
+  EOCP
+! 	if $cc $ccflags $ldflags foo.c -o safemcpy $libs >/dev/null 2>&1; then
+  		if ./safemcpy 2>/dev/null; then
+  			echo "Yes, it can."
+  			val="$define"
+***************
+*** 5485,5570 ****
+  	else
+  		val="$undef"
+  	fi
+! 	$rm -f shmat.[co]
+! 	;;
+! *)
+! 	val="$undef"
+! 	;;
+! esac
+! set d_shmatprototype
+! eval $setvar
+! 
+! : see if shmdt exists
+! set shmdt d_shmdt
+! eval $inlibc
+! 
+! : see how much of the 'shm*(2)' library is present.
+! h_shm=true
+! echo " "
+! case "$d_shmctl$d_shmget$d_shmat$d_shmdt" in
+! *"$undef"*) h_shm=false;;
+! esac
+! : we could also check for sys/ipc.h ...
+! if $h_shm && $test `./findhdr sys/shm.h`; then
+! 	echo "You have the full shm*(2) library." >&4
+! 	val="$define"
+! else
+! 	echo "You don't have the full shm*(2) library." >&4
+! 	val="$undef"
+! fi
+! set d_shm
+! eval $setvar
+! 
+! : determine whether the user wants to include a site-specific library
+! : in addition to privlib.
+! $cat <<EOM
+! 
+! Some sites may wish to specify a local directory for $package
+! to search by default in addition to $privlib.
+! If you don't want to use such an additional directory, answer 'none'.
+! 
+! EOM
+! case "$sitelib" in
+! '') dflt=none ;;
+! *) dflt="$sitelib" ;;
+! esac
+! fn=d~+n
+! rp='Local directory for additional library files?'
+! . ./getfile
+! if $test "X$sitelibexp" != "X$ansexp"; then
+! 	installsitelib=''
+! fi
+! sitelib="$ans"
+! sitelibexp="$ansexp"
+! if $afs; then
+!     case "$sitelib" in
+! 	'') installsitelib="$sitelibexp"
+! 		;;
+! 	*)	$cat <<EOM
+  
+! Since you are running AFS, I need to distinguish the directory in which
+! private files reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+  
+! EOM
+! 		case "$installsitelib" in
+! 		'') dflt=`echo $sitelibexp | sed 's#^/afs/#/afs/.#'`;;
+! 		*) dflt="$installsitelib";;
+! 		esac
+! 		fn=de~
+! 		rp='Where will additional local files be installed?'
+! 		. ./getfile
+! 		installsitelib="$ans"
+! 		;;
+! 	esac
+  else
+! 	installsitelib="$sitelibexp"
+  fi
+! 
+! case "$sitelibexp" in
+! '') d_sitelib=undef ;;
+! *) d_sitelib=define ;;
+! esac
+  
+  socketlib=''
+  sockethdr=''
+--- 6134,6168 ----
+  	else
+  		val="$undef"
+  	fi
+! 	$rm -f shmat.[co]
+! 	;;
+! *)
+! 	val="$undef"
+! 	;;
+! esac
+! set d_shmatprototype
+! eval $setvar
+  
+! : see if shmdt exists
+! set shmdt d_shmdt
+! eval $inlibc
+  
+! : see how much of the 'shm*(2)' library is present.
+! h_shm=true
+! echo " "
+! case "$d_shmctl$d_shmget$d_shmat$d_shmdt" in
+! *"$undef"*) h_shm=false;;
+! esac
+! : we could also check for sys/ipc.h ...
+! if $h_shm && $test `./findhdr sys/shm.h`; then
+! 	echo "You have the full shm*(2) library." >&4
+! 	val="$define"
+  else
+! 	echo "You don't have the full shm*(2) library." >&4
+! 	val="$undef"
+  fi
+! set d_shm
+! eval $setvar
+  
+  socketlib=''
+  sockethdr=''
+***************
+*** 5645,5659 ****
+  	'') stdio_ptr='((fp)->_IO_read_ptr)'
+  		ptr_lval=$define
+  		;;
+! 	*)	ptr_lval=$d_stdio_ptr_lval
+! 		;;
+  	esac
+  	case "$stdio_cnt" in
+  	'') stdio_cnt='((fp)->_IO_read_end - (fp)->_IO_read_ptr)'
+  		cnt_lval=$undef
+  		;;
+! 	*)	cnt_lval=$d_stdio_cnt_lval
+! 		;;
+  	esac
+  	case "$stdio_base" in
+  	'') stdio_base='((fp)->_IO_read_base)';;
+--- 6243,6255 ----
+  	'') stdio_ptr='((fp)->_IO_read_ptr)'
+  		ptr_lval=$define
+  		;;
+! 	*)	ptr_lval=$d_stdio_ptr_lval;;
+  	esac
+  	case "$stdio_cnt" in
+  	'') stdio_cnt='((fp)->_IO_read_end - (fp)->_IO_read_ptr)'
+  		cnt_lval=$undef
+  		;;
+! 	*)	cnt_lval=$d_stdio_cnt_lval;;
+  	esac
+  	case "$stdio_base" in
+  	'') stdio_base='((fp)->_IO_read_base)';;
+***************
+*** 5666,5680 ****
+  	'') stdio_ptr='((fp)->_ptr)'
+  		ptr_lval=$define
+  		;;
+! 	*)	ptr_lval=$d_stdio_ptr_lval
+! 		;;
+  	esac
+  	case "$stdio_cnt" in
+  	'') stdio_cnt='((fp)->_cnt)'
+  		cnt_lval=$define
+  		;;
+! 	*)	cnt_lval=$d_stdio_cnt_lval
+! 		;;
+  	esac
+  	case "$stdio_base" in
+  	'') stdio_base='((fp)->_base)';;
+--- 6262,6274 ----
+  	'') stdio_ptr='((fp)->_ptr)'
+  		ptr_lval=$define
+  		;;
+! 	*)	ptr_lval=$d_stdio_ptr_lval;;
+  	esac
+  	case "$stdio_cnt" in
+  	'') stdio_cnt='((fp)->_cnt)'
+  		cnt_lval=$define
+  		;;
+! 	*)	cnt_lval=$d_stdio_cnt_lval;;
+  	esac
+  	case "$stdio_base" in
+  	'') stdio_base='((fp)->_base)';;
+***************
+*** 5715,5722 ****
+  set d_stdstdio
+  eval $setvar
+  
+! : Can _ptr be used as an lvalue.  Only makes sense if we
+! : have a known stdio implementation.
+  case "$d_stdstdio$ptr_lval" in
+  $define$define) val=$define ;;
+  *) val=$undef ;;
+--- 6309,6315 ----
+  set d_stdstdio
+  eval $setvar
+  
+! : Can _ptr be used as an lvalue?
+  case "$d_stdstdio$ptr_lval" in
+  $define$define) val=$define ;;
+  *) val=$undef ;;
+***************
+*** 5724,5732 ****
+  set d_stdio_ptr_lval
+  eval $setvar
+  
+! 
+! : Can _cnt be used as an lvalue.  Only makes sense if we
+! : have a known stdio implementation.
+  case "$d_stdstdio$cnt_lval" in
+  $define$define) val=$define ;;
+  *) val=$undef ;;
+--- 6317,6323 ----
+  set d_stdio_ptr_lval
+  eval $setvar
+  
+! : Can _cnt be used as an lvalue?
+  case "$d_stdstdio$cnt_lval" in
+  $define$define) val=$define ;;
+  *) val=$undef ;;
+***************
+*** 5734,5740 ****
+  set d_stdio_cnt_lval
+  eval $setvar
+  
+- 
+  : see if _base is also standard
+  val="$undef"
+  case "$d_stdstdio" in
+--- 6325,6330 ----
+***************
+*** 5877,5888 ****
+  	done;
+  	$cppstdin $cppflags $cppminus < temp.c >temp.E 2>/dev/null;
+  	if $contains $type temp.E >/dev/null 2>&1; then
+! 		eval "$var=$type";
+  	else
+! 		eval "$var=$def";
+  	fi;
+  	$rm -f temp.?;;
+! *) eval "$var=$varval";;
+  esac'
+  
+  : see if this is a sys/times.h system
+--- 6467,6478 ----
+  	done;
+  	$cppstdin $cppflags $cppminus < temp.c >temp.E 2>/dev/null;
+  	if $contains $type temp.E >/dev/null 2>&1; then
+! 		eval "$var=\$type";
+  	else
+! 		eval "$var=\$def";
+  	fi;
+  	$rm -f temp.?;;
+! *) eval "$var=\$varval";;
+  esac'
+  
+  : see if this is a sys/times.h system
+***************
+*** 5931,6086 ****
+  set umask d_umask
+  eval $inlibc
+  
+- : see if we have to deal with yellow pages, now NIS.
+- if $test -d /usr/etc/yp || $test -d /etc/yp; then
+- 	if $test -f /usr/etc/nibindd; then
+- 		echo " "
+- 		echo "I'm fairly confident you're on a NeXT."
+- 		echo " "
+- 		rp='Do you get the hosts file via NetInfo?'
+- 		dflt=y
+- 		case "$hostcat" in
+- 		nidump*) ;;
+- 		'') ;;
+- 		*) dflt=n;;
+- 		esac
+- 		. ./myread
+- 		case "$ans" in
+- 		y*) hostcat='nidump hosts .';;
+- 		*)	case "$hostcat" in
+- 			nidump*) hostcat='';;
+- 			esac
+- 			;;
+- 		esac
+- 	fi
+- 	case "$hostcat" in
+- 	nidump*) ;;
+- 	*)
+- 		case "$hostcat" in
+- 		*ypcat*) dflt=y;;
+- 		'') if $contains '^\+' /etc/passwd >/dev/null 2>&1; then
+- 				dflt=y
+- 			else
+- 				dflt=n
+- 			fi;;
+- 		*) dflt=n;;
+- 		esac
+- 		echo " "
+- 		rp='Are you getting the hosts file via yellow pages?'
+- 		. ./myread
+- 		case "$ans" in
+- 		y*) hostcat='ypcat hosts';;
+- 		*) hostcat='cat /etc/hosts';;
+- 		esac
+- 		;;
+- 	esac
+- fi
+- 
+- : now get the host name
+- echo " "
+- echo "Figuring out host name..." >&4
+- case "$myhostname" in
+- '') cont=true
+- 	echo 'Maybe "hostname" will work...'
+- 	if tans=`sh -c hostname 2>&1` ; then
+- 		myhostname=$tans
+- 		phostname=hostname
+- 		cont=''
+- 	fi
+- 	;;
+- *) cont='';;
+- esac
+- if $test "$cont"; then
+- 	if ./xenix; then
+- 		echo 'Oh, dear.  Maybe "/etc/systemid" is the key...'
+- 		if tans=`cat /etc/systemid 2>&1` ; then
+- 			myhostname=$tans
+- 			phostname='cat /etc/systemid'
+- 			echo "Whadyaknow.  Xenix always was a bit strange..."
+- 			cont=''
+- 		fi
+- 	elif $test -r /etc/systemid; then
+- 		echo "(What is a non-Xenix system doing with /etc/systemid?)"
+- 	fi
+- fi
+- if $test "$cont"; then
+- 	echo 'No, maybe "uuname -l" will work...'
+- 	if tans=`sh -c 'uuname -l' 2>&1` ; then
+- 		myhostname=$tans
+- 		phostname='uuname -l'
+- 	else
+- 		echo 'Strange.  Maybe "uname -n" will work...'
+- 		if tans=`sh -c 'uname -n' 2>&1` ; then
+- 			myhostname=$tans
+- 			phostname='uname -n'
+- 		else
+- 			echo 'Oh well, maybe I can mine it out of whoami.h...'
+- 			if tans=`sh -c $contains' sysname $usrinc/whoami.h' 2>&1` ; then
+- 				myhostname=`echo "$tans" | $sed 's/^.*"\(.*\)"/\1/'`
+- 				phostname="sed -n -e '"'/sysname/s/^.*\"\\(.*\\)\"/\1/{'"' -e p -e q -e '}' <$usrinc/whoami.h"
+- 			else
+- 				case "$myhostname" in
+- 				'') echo "Does this machine have an identity crisis or something?"
+- 					phostname='';;
+- 				*)
+- 					echo "Well, you said $myhostname before..."
+- 					phostname='echo $myhostname';;
+- 				esac
+- 			fi
+- 		fi
+- 	fi
+- fi
+- : you do not want to know about this
+- set $myhostname
+- myhostname=$1
+- 
+- : verify guess
+- if $test "$myhostname" ; then
+- 	dflt=y
+- 	rp='Your host name appears to be "'$myhostname'".'" Right?"
+- 	. ./myread
+- 	case "$ans" in
+- 	y*) ;;
+- 	*) myhostname='';;
+- 	esac
+- fi
+- 
+- : bad guess or no guess
+- while $test "X$myhostname" = X ; do
+- 	dflt=''
+- 	rp="Please type the (one word) name of your host:"
+- 	. ./myread
+- 	myhostname="$ans"
+- done
+- 
+- : translate upper to lower if necessary
+- case "$myhostname" in
+- *[A-Z]*)
+- 	echo "(Normalizing case in your host name)"
+- 	myhostname=`echo $myhostname | ./tr '[A-Z]' '[a-z]'`
+- 	;;
+- esac
+- 
+- : a little sanity check here
+- case "$phostname" in
+- '') ;;
+- *)
+- 	case `$phostname | ./tr '[A-Z]' '[a-z]'` in
+- 	$myhostname$mydomain|$myhostname) ;;
+- 	*)
+- 		case "$phostname" in
+- 		sed*)
+- 			echo "(That doesn't agree with your whoami.h file, by the way.)"
+- 			;;
+- 		*)
+- 			echo "(That doesn't agree with your $phostname command, by the way.)"
+- 			;;
+- 		esac
+- 	;;
+- 	esac
+- 	;;
+- esac
+- 
+  : see how we will look up host name
+  echo " "
+  if false; then
+--- 6521,6526 ----
+***************
+*** 6275,6335 ****
+  case "$alignbytes" in
+  '') echo "Checking alignment constraints..." >&4
+  	$cat >try.c <<'EOCP'
+! struct foobar {
+! 	char foo;
+! 	double bar;
+! } try;
+! main()
+! {
+! 	printf("%d\n", (char *)&try.bar - (char *)&try.foo);
+! }
+! EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1; then
+! 		dflt=`./try`
+! 	else
+! 		dflt='8'
+! 		echo"(I can't seem to compile the test program...)"
+! 	fi
+! 	;;
+! *) dflt="$alignbytes"
+! 	;;
+! esac
+! rp="Doubles must be aligned on a how-many-byte boundary?"
+! . ./myread
+! alignbytes="$ans"
+! $rm -f try.c try
+! 
+! : determine where public executables go
+! echo " "
+! set dflt bin bin
+! eval $prefixit
+! fn=d~
+! rp='Pathname where the public executables will reside?'
+! . ./getfile
+! if $test "X$ansexp" != "X$binexp"; then
+! 	installbin=''
+! fi
+! bin="$ans"
+! binexp="$ansexp"
+! if $afs; then
+! 	$cat <<EOM
+! 
+! Since you are running AFS, I need to distinguish the directory in which
+! executables reside from the directory in which they are installed (and from
+! which they are presumably copied to the former directory by occult means).
+! 
+! EOM
+! 	case "$installbin" in
+! 	'') dflt=`echo $binexp | sed 's#^/afs/#/afs/.#'`;;
+! 	*) dflt="$installbin";;
+! 	esac
+! 	fn=de~
+! 	rp='Where will public executables be installed?'
+! 	. ./getfile
+! 	installbin="$ans"
+! else
+! 	installbin="$binexp"
+! fi
+  
+  : check for ordering of bytes in a long
+  case "$byteorder" in
+--- 6715,6743 ----
+  case "$alignbytes" in
+  '') echo "Checking alignment constraints..." >&4
+  	$cat >try.c <<'EOCP'
+! struct foobar {
+! 	char foo;
+! 	double bar;
+! } try;
+! main()
+! {
+! 	printf("%d\n", (char *)&try.bar - (char *)&try.foo);
+! }
+! EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1; then
+! 		dflt=`./try`
+! 	else
+! 		dflt='8'
+! 		echo"(I can't seem to compile the test program...)"
+! 	fi
+! 	;;
+! *) dflt="$alignbytes"
+! 	;;
+! esac
+! rp="Doubles must be aligned on a how-many-byte boundary?"
+! . ./myread
+! alignbytes="$ans"
+! $rm -f try.c try
+  
+  : check for ordering of bytes in a long
+  case "$byteorder" in
+***************
+*** 6360,6372 ****
+  	for (i = 0; i < sizeof(long); i++)
+  		printf("%c", u.c[i]+'0');
+  	printf("\n");
+  }
+  EOCP
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 ; then
+  		dflt=`./try`
+  		case "$dflt" in
+! 		????|????????) echo "(The test program ran ok.)";;
+! 		*) echo "(The test program didn't run right for some reason.)";;
+  		esac
+  	else
+  		dflt='4321'
+--- 6768,6786 ----
+  	for (i = 0; i < sizeof(long); i++)
+  		printf("%c", u.c[i]+'0');
+  	printf("\n");
++ 	exit(0);
+  }
+  EOCP
+! 	xxx_prompt=y
+! 	if $cc $ccflags try.c -o try >/dev/null 2>&1 && ./try > /dev/null; then
+  		dflt=`./try`
+  		case "$dflt" in
+! 		[1-4][1-4][1-4][1-4]|12345678|87654321)
+! 			echo "(The test program ran ok.)"
+! 			xxx_prompt=n
+! 			;;
+! 		????|????????) echo "(The test program ran ok.)" ;;
+! 		*) echo "(The test program didn't run right for some reason.)" ;;
+  		esac
+  	else
+  		dflt='4321'
+***************
+*** 6374,6388 ****
+  (I can't seem to compile the test program.  Guessing big-endian...)
+  EOM
+  	fi
+! 	;;
+! *)
+! 	echo " "
+! 	dflt="$byteorder"
+  	;;
+  esac
+- rp="What is the order of bytes in a long?"
+- . ./myread
+- byteorder="$ans"
+  $rm -f try.c try
+  
+  : how do we catenate cpp tokens here?
+--- 6788,6804 ----
+  (I can't seem to compile the test program.  Guessing big-endian...)
+  EOM
+  	fi
+! 	case "$xxx_prompt" in
+! 	y)
+! 		rp="What is the order of bytes in a long?"
+! 		. ./myread
+! 		byteorder="$ans"
+! 		;;
+! 	*)	byteorder=$dflt
+! 		;;
+! 	esac
+  	;;
+  esac
+  $rm -f try.c try
+  
+  : how do we catenate cpp tokens here?
+***************
+*** 6580,6610 ****
+  		fi
+  	fi
+  esac
+! dflt="$voidflags";
+! rp="Your void support flags add up to what?"
+! . ./myread
+! voidflags="$ans"
+  $rm -f try.* .out
+  
+  : see if dbm.h is available
+! set dbm.h t_dbm
+! eval $inhdr
+! case "$t_dbm" in
+  $define)
+! 	: see if dbmclose exists
+! 	set dbmclose d_dbmclose
+! 	eval $inlibc
+! 	case "$d_dbmclose" in
+! 	$undef)
+! 		t_dbm="$undef"
+! 		echo "We won't be including <dbm.h>"
+  		;;
+  	esac
+  	;;
+  esac
+- val="$t_dbm"
+- set i_dbm
+- eval $setvar
+  
+  : see if ndbm.h is available
+  set ndbm.h t_ndbm
+--- 6996,7042 ----
+  		fi
+  	fi
+  esac
+! : Only prompt user if voidflags is not 15.  If voidflags is 15, then
+! : we presume all is well.
+! case "$voidflags" in
+! 15) ;;
+! *)	dflt="$voidflags";
+! 	rp="Your void support flags add up to what?"
+! 	. ./myread
+! 	voidflags="$ans"
+! 	;;
+! esac
+  $rm -f try.* .out
+  
+  : see if dbm.h is available
+! : see if dbmclose exists
+! set dbmclose d_dbmclose
+! eval $inlibc
+! 
+! case "$d_dbmclose" in
+  $define)
+! 	set dbm.h i_dbm
+! 	eval $inhdr
+! 	case "$i_dbm" in
+! 	$define)
+! 		val="$undef"
+! 		set i_rpcsvcdbm
+! 		eval $setvar
+! 		;;
+! 	*)	set rpcsvc/dbm.h i_rpcsvcdbm
+! 		eval $inhdr
+  		;;
+  	esac
+  	;;
++ *)	echo "We won't be including <dbm.h>"
++ 	val="$undef"
++ 	set i_dbm
++ 	eval $setvar
++ 	val="$undef"
++ 	set i_rpcsvcdbm
++ 	eval $setvar
++ 	;;
+  esac
+  
+  : see if ndbm.h is available
+  set ndbm.h t_ndbm
+***************
+*** 6692,6699 ****
+  	    $define) avail_ext="$avail_ext $xxx" ;;
+  	    esac
+  	    ;;
+!     ODBM_File) case "$i_dbm" in 
+! 	    $define) avail_ext="$avail_ext $xxx" ;;
+  	    esac
+  	    ;;
+      POSIX) case "$useposix" in 
+--- 7124,7131 ----
+  	    $define) avail_ext="$avail_ext $xxx" ;;
+  	    esac
+  	    ;;
+!     ODBM_File) case "${i_dbm}${i_rpcsvcdbm}" in 
+! 	    *"${define}"*) avail_ext="$avail_ext $xxx" ;;
+  	    esac
+  	    ;;
+      POSIX) case "$useposix" in 
+***************
+*** 6855,7024 ****
+  . ./myread
+  lseektype="$ans"
+  
+- : determine where manual pages go
+- set man1dir man1dir none
+- eval $prefixit
+- $cat <<EOM
+- 
+- $spackage has manual pages available in source form.
+- EOM
+- case "$nroff" in
+- nroff)
+- 	echo "However, you don't have nroff, so they're probably useless to you."
+- 	case "$man1dir" in
+- 	'') man1dir="none";;
+- 	esac;;
+- esac
+- echo "If you don't want the manual sources installed, answer 'none'."
+- case "$man1dir" in
+- '')
+- 	lookpath="$prefixexp/man/man1 $prefixexp/man/u_man/man1"
+- 	lookpath="$lookpath $prefixexp/man/l_man/man1"
+- 	lookpath="$lookpath /usr/local/man/man1 /opt/man/man1 /usr/man/manl"
+- 	lookpath="$lookpath /usr/man/local/man1 /usr/man/l_man/man1"
+- 	lookpath="$lookpath /usr/local/man/u_man/man1 /usr/local/man/l_man/man1"
+- 	lookpath="$lookpath /usr/man/man.L"
+- 	man1dir=`./loc . $prefixexp/man/man1 $lookpath`
+- 	if $test -d "$man1dir"; then
+- 		dflt="$man1dir"
+- 	else
+- 		dflt="$sysman"
+- 	fi
+- 	set dflt
+- 	eval $prefixup
+- 	;;
+- ' ') dflt=none;;
+- *)  dflt="$man1dir"
+- 	;;
+- esac
+- echo " "
+- fn=dn~
+- rp="Where do the main $spackage manual pages (source) go?"
+- . ./getfile
+- if test "X$man1direxp" != "X$ansexp"; then
+- 	installman1dir=''
+- fi
+- man1dir="$ans"
+- man1direxp="$ansexp"
+- case "$man1dir" in
+- '') man1dir=' '
+- 	installman1dir='';;
+- esac
+- if $afs; then
+- 	$cat <<EOM
+- 
+- Since you are running AFS, I need to distinguish the directory in which
+- manual pages reside from the directory in which they are installed (and from
+- which they are presumably copied to the former directory by occult means).
+- 
+- EOM
+- 	case "$installman1dir" in
+- 	'') dflt=`echo $man1direxp | sed 's#^/afs/#/afs/.#'`;;
+- 	*) dflt="$installman1dir";;
+- 	esac
+- 	fn=de~
+- 	rp='Where will man pages be installed?'
+- 	. ./getfile
+- 	installman1dir="$ans"
+- else
+- 	installman1dir="$man1direxp"
+- fi
+- 
+- case "$man1dir" in
+- ' ') man1ext='0';;
+- *l) man1ext=l;;
+- *n) man1ext=n;;
+- *o) man1ext=l;;
+- *p) man1ext=n;;
+- *C) man1ext=C;;
+- *L) man1ext=L;;
+- *L1) man1ext=L1;;
+- *) man1ext=1;;
+- esac
+- 
+- : determine where library module manual pages go
+- set man3dir man3dir none
+- eval $prefixit
+- $cat <<EOM
+- 
+- $spackage has manual pages for many of the library modules.
+- EOM
+- 
+- case "$nroff" in
+- nroff)
+- 	$cat <<'EOM'
+- However, you don't have nroff, so they're probably useless to you.
+- You can use the supplied perldoc script instead.
+- EOM
+- 	case "$man3dir" in
+- 	'') man3dir="none";;
+- 	esac;;
+- esac
+- 
+- case "$d_flexfnam" in
+- undef)
+- 	$cat <<'EOM'
+- However, your system can't handle the long file names like File::Basename.3. 
+- You can use the supplied perldoc script instead.
+- EOM
+- 	case "$man3dir" in
+- 	'') man3dir="none";;
+- 	esac;;
+- esac
+- 
+- echo "If you don't want the manual sources installed, answer 'none'."
+- case "$man3dir" in
+- '')	dflt="$privlib/man/man3" ;;
+- ' ') dflt=none;;
+- *)	dflt="$man3dir" ;;
+- esac
+- echo " "
+- 
+- fn=dn~
+- rp="Where do the $spackage library man pages (source) go?"
+- . ./getfile
+- if test "X$man3direxp" != "X$ansexp"; then
+- 	installman3dir=''
+- fi
+- 
+- man3dir="$ans"
+- man3direxp="$ansexp"
+- case "$man3dir" in
+- '') man3dir=' '
+- 	installman3dir='';;
+- esac
+- if $afs; then
+- 	$cat <<EOM
+- 
+- Since you are running AFS, I need to distinguish the directory in which
+- manual pages reside from the directory in which they are installed (and from
+- which they are presumably copied to the former directory by occult means).
+- 
+- EOM
+- 	case "$installman3dir" in
+- 	'') dflt=`echo $man3direxp | sed 's#^/afs/#/afs/.#'`;;
+- 	*) dflt="$installman3dir";;
+- 	esac
+- 	fn=de~
+- 	rp='Where will man pages be installed?'
+- 	. ./getfile
+- 	installman3dir="$ans"
+- else
+- 	installman3dir="$man3direxp"
+- fi
+- 
+- case "$man3dir" in
+- ' ') man3ext='0';;
+- *l) man3ext=l;;
+- *n) man3ext=n;;
+- *o) man3ext=l;;
+- *p) man3ext=n;;
+- *C) man3ext=C;;
+- *L) man3ext=L;;
+- *L3) man3ext=L3;;
+- *) man3ext=3;;
+- esac
+- 
+  : see what type is used for mode_t
+  set mode_t modetype int stdio.h sys/types.h
+  eval $typedef
+--- 7287,7292 ----
+***************
+*** 7140,7198 ****
+  fi
+  $rm -f foo* bar* 
+  
+- : determine where public executable scripts go
+- set scriptdir scriptdir
+- eval $prefixit
+- case "$scriptdir" in
+- '')
+- 	dflt="$bin"
+- 	: guess some guesses
+- 	$test -d /usr/share/scripts && dflt=/usr/share/scripts
+- 	$test -d /usr/share/bin && dflt=/usr/share/bin
+- 	$test -d /usr/local/script && dflt=/usr/local/script
+- 	$test -d $prefixexp/script && dflt=$prefixexp/script
+- 	set dflt
+- 	eval $prefixup
+- 	;;
+- *)  dflt="$scriptdir"
+- 	;;
+- esac
+- $cat <<EOM
+-  
+- Some installations have a separate directory just for executable scripts so
+- that they can mount it across multiple architectures but keep the scripts in
+- one spot.  You might, for example, have a subdirectory of /usr/share for this.
+- Or you might just lump your scripts in with all your other executables.
+-  
+- EOM
+- fn=d~
+- rp='Where do you keep publicly executable scripts?'
+- . ./getfile
+- if $test "X$ansexp" != "X$scriptdirexp"; then
+- 	installscript=''
+- fi
+- scriptdir="$ans"
+- scriptdirexp="$ansexp"
+- if $afs; then
+- 	$cat <<EOM
+- 
+- Since you are running AFS, I need to distinguish the directory in which
+- scripts reside from the directory in which they are installed (and from
+- which they are presumably copied to the former directory by occult means).
+- 
+- EOM
+- 	case "$installscript" in
+- 	'') dflt=`echo $scriptdirexp | sed 's#^/afs/#/afs/.#'`;;
+- 	*) dflt="$installscript";;
+- 	esac
+- 	fn=de~
+- 	rp='Where will public scripts be installed?'
+- 	. ./getfile
+- 	installscript="$ans"
+- else
+- 	installscript="$scriptdirexp"
+- fi
+- 
+  : see if sys/select.h has to be included
+  set sys/select.h i_sysselct
+  eval $inhdr
+--- 7408,7413 ----
+***************
+*** 7419,7425 ****
+  	fi
+  	$rm -f try.[co]
+  	;;
+! *)	selecttype = 'int *' 
+  	;;
+  esac
+  
+--- 7634,7640 ----
+  	fi
+  	$rm -f try.[co]
+  	;;
+! *)	selecttype='int *'
+  	;;
+  esac
+  
+***************
+*** 7429,7435 ****
+  '')
+  	echo "Generating a list of signal names..." >&4
+  	xxx=`./findhdr signal.h`" "`./findhdr sys/signal.h`
+! 	xxx="$xxx "`./findhdr linux/signal.h`
+  	set X `cat $xxx 2>&1 | $awk '
+  $1 ~ /^#define$/ && $2 ~ /^SIG[A-Z0-9]*$/ && $3 ~ /^[1-9][0-9]*$/ {
+  	sig[$3] = substr($2,4,20)
+--- 7644,7650 ----
+  '')
+  	echo "Generating a list of signal names..." >&4
+  	xxx=`./findhdr signal.h`" "`./findhdr sys/signal.h`
+! 	xxx="$xxx "`./findhdr linux/signal.h`" "`./findhdr asm/signal.h`
+  	set X `cat $xxx 2>&1 | $awk '
+  $1 ~ /^#define$/ && $2 ~ /^SIG[A-Z0-9]*$/ && $3 ~ /^[1-9][0-9]*$/ {
+  	sig[$3] = substr($2,4,20)
+***************
+*** 7437,7442 ****
+--- 7652,7664 ----
+  		max = $3
+  	}
+  }
++ $1 == "#" && $2 ~ /^define$/ && $3 ~ /^SIG[A-Z0-9]*$/ && $4 ~ /^[1-9][0-9]*$/ {
++ 	print $3, $4
++ 	sig[$4] = substr($3,4,20)
++ 	if (max < $4 && $4 < 60) {
++ 		max = $4
++ 	}
++ }
+  
+  END {
+  	for (i = 1; i <= max; i++) {
+***************
+*** 7480,7487 ****
+  		}
+  		printf "%s", name
+  	}
+! }'
+! echo " "
+  
+  : see what type is used for size_t
+  set size_t sizetype 'unsigned int' stdio.h sys/types.h
+--- 7702,7709 ----
+  		}
+  		printf "%s", name
+  	}
+! }
+! END { printf "\n"}'
+  
+  : see what type is used for size_t
+  set size_t sizetype 'unsigned int' stdio.h sys/types.h
+***************
+*** 7583,7589 ****
+  set sys/file.h val
+  eval $inhdr
+  
+! : do we need to #include <sys/file.h> ?
+  case "$val" in
+  "$define")
+  	echo " "
+--- 7805,7811 ----
+  set sys/file.h val
+  eval $inhdr
+  
+! : do we need to include sys/file.h ?
+  case "$val" in
+  "$define")
+  	echo " "
+***************
+*** 8104,8109 ****
+--- 8326,8332 ----
+  ccdlflags='$ccdlflags'
+  ccflags='$ccflags'
+  cf_by='$cf_by'
++ cf_email='$cf_email'
+  cf_time='$cf_time'
+  chgrp='$chgrp'
+  chmod='$chmod'
+***************
+*** 8337,8342 ****
+--- 8560,8566 ----
+  i_neterrno='$i_neterrno'
+  i_niin='$i_niin'
+  i_pwd='$i_pwd'
++ i_rpcsvcdbm='$i_rpcsvcdbm'
+  i_sgtty='$i_sgtty'
+  i_stdarg='$i_stdarg'
+  i_stddef='$i_stddef'
+***************
+*** 8390,8395 ****
+--- 8614,8621 ----
+  lkflags='$lkflags'
+  ln='$ln'
+  lns='$lns'
++ locincpth='$locincpth'
++ loclibpth='$loclibpth'
+  lp='$lp'
+  lpr='$lpr'
+  ls='$ls'
+***************
+*** 8429,8434 ****
+--- 8655,8661 ----
+  passcat='$passcat'
+  patchlevel='$patchlevel'
+  perl='$perl'
++ perladmin='$perladmin'
+  pg='$pg'
+  phostname='$phostname'
+  plibpth='$plibpth'
+Index: INSTALL
+*** /dev/null	Wed Sep 27 15:40:19 1995
+--- perl5.001n/INSTALL	Wed Sep 27 14:50:58 1995
+***************
+*** 0 ****
+--- 1,423 ----
++ =head1 NAME
++ 
++ Install - Build and Installation guide for perl5.
++ 
++ =head1 SYNOPSIS
++ 
++ The basic steps to build and install perl5 are:
++ 
++ 	rm -f config.sh
++ 	sh Configure
++ 	make
++ 	make test
++ 	make install
++ 
++ Each of these is explained in further detail below.
++ 
++ =head1 BUILDING PERL5
++ 
++ =head1 Start with a Fresh Distribution.
++ 
++ The results of a Configure run are stored in the config.sh file.
++ If you are upgrading from a previous version of perl, or if you
++ change compilers or make other significant changes, or if you are
++ experiencing difficulties building perl, you should
++ probably I<not> re-use your old config.sh.  Simply remove it or
++ rename it, e.g.
++ 
++ 	mv config.sh config.sh.old
++ 	
++ Then run Configure.
++ 
++ =head1 Run Configure.
++ 
++ Configure will figure out various things about your system.  Some
++ things Configure will figure out for itself, other things it will ask
++ you about.  To accept the default, just press C<RETURN>.   The default
++ is almost always ok.
++ 
++ After it runs, Configure will perform variable substitution on all the
++ F<*.SH> files and offer to run B<make depend>.
++ 
++ Configure supports a number of useful options.  Run B<Configure -h>
++ to get a listing.  To compile with gcc, for example, you can run
++ 
++ 	sh Configure -Dcc=gcc
++ 
++ This is the preferred way to specify gcc (or another alternative
++ compiler) so that the hints files can set appropriate defaults.
++ 
++ If you are willing to accept all the defaults, and you want terse
++ output, you can run
++ 
++ 	sh Configure -des
++ 
++ By default, for most systems, perl will be installed in
++ /usr/local/{bin, lib, man}.  You can specify a different 'prefix' for
++ the default installation directory, when Configure prompts you or by
++ using the Configure command line option -Dprefix='/some/directory',
++ e.g.
++ 
++ 	Configure -Dprefix=/opt/local
++ 
++ =head2 GNU-style configure
++ 
++ If you prefer the GNU-style B<configure> command line interface, you can
++ use the supplied B<configure> command, e.g.
++ 
++ 	CC=gcc ./configure
++ 
++ The B<configure> script emulates several of the more common configure
++ options.  Try
++ 
++ 	configure --help
++ 
++ for a listing.
++ 
++ Cross compiling is currently not supported.
++ 
++ =head2 Including locally-installed libraries
++ 
++ Perl5 comes with a number of database extensions, including interfaces
++ to dbm, ndbm, gdbm, and Berkeley db.  For each extension, if Configure
++ can find the appropriate header files and libraries, it will automatically
++ include that extension.
++ 
++ I<Note:>  If your database header (.h) files are not in a
++ directory normally searched by your C compiler, then you will need to
++ include the appropriate B<-I/your/directory> option when prompted by
++ Configure.  If your database library (.a) files are not in a directory
++ normally searched by your C compiler and linker, then you will need to
++ include the appropriate B<-L/your/directory> option when prompted by
++ Configure.  See the examples below.
++ 
++ By default, Configure will compile perl to use dynamic loading, if
++ your system supports it.  If you want to force perl to be compiled
++ statically, you can either choose this when Configure prompts you or by
++ using the Configure command line option -Uusedl.
++ 
++ =head2 Examples
++ 
++ =over 4
++ 
++ =item gdbm in /usr/local.
++ 
++ Suppose you have gdbm and want Configure to find it and build the
++ GDBM_File extension.  This examples assumes you have F<gdbm.h>
++ installed in F</usr/local/include/gdbm.h> and F<libgdbm.a> installed in
++ F</usr/local/lib/libgdbm.a>.  Configure should figure all the
++ necessary steps out automatically.
++ 
++ Specifically, when Configure prompts you for flags for
++ your C compiler, you should include  C<-I/usr/local/include>.
++ 
++ When Configure prompts you for linker flags, you should include
++ C<-L/usr/local/lib>.
++ 
++ If you are using dynamic loading, then when Configure prompts you for
++ linker flags for dynamic loading, you should again include
++ C<-L/usr/local/lib>.
++ 
++ Again, this should all happen automatically.  If you want to accept the
++ defaults for all the and have Configure print out only terse messages,
++ then you can just run
++ 
++ 	sh Configure -des
++ 
++ and Configure should include the GDBM_File extension automatically.
++ 
++ This should actually work if you have gdbm installed in any of
++ (/usr/local, /opt/local, /usr/gnu, /opt/gnu, /usr/GNU, /opt/GNU).
++ 
++ =item gdbm in /usr/you
++ 
++ Suppose you have gdbm installed in some place other than /usr/local/,
++ but you still want Configure to find it.  To be specific, assume  you
++ have F</usr/you/include/gdbm.h> and F</usr/you/lib/libgdbm.a>.  You
++ still have to add B<-I/usr/you/include> to cc flags, but you have to take
++ an extra step to help Configure find F<libgdbm.a>.  Specifically, when
++ Configure prompts you for library directories, you have to add
++ F</usr/you/lib> to the list.
++ 
++ It is possible to specify this from the command line too (all on one
++ line):
++ 
++ 	sh Configure -des \
++ 		-Dlocincpth="/usr/you/include" \
++ 		-Dloclibpth="/usr/you/lib"
++ 
++ C<locincpth> is a space-separated list of include directories to search.
++ Configure will automatically add the appropriate B<-I> directives.
++ 
++ C<loclibpth> is a space-separated list of library directories to search.
++ Configure will automatically add the appropriate B<-L> directives.  If
++ you have some libraries under F</usr/local/> and others under
++ F</usr/you>, then you have to include both, namely
++ 	
++ 	sh Configure -des \
++ 		-Dlocincpth="/usr/you/include /usr/local/include" \
++ 		-Dloclibpth="/usr/you/lib /usr/local/lib"
++ 
++ =back
++ 
++ =head2 What if it doesn't work?
++ 
++ =over 4
++ 
++ =item Hint files.
++ 
++ The perl distribution includes a number of system-specific hints files
++ in the hints/ directory.  If one of them matches your system, Configure
++ will offer to use that hint file.
++ 
++ Several of the hint files contain additional important information.
++ If you have any problems, it is a good idea to read the relevant hint
++ file for further information.  See F<hints/solaris_2.sh> for an
++ extensive example.
++ 
++ =item Changing Compilers
++ 
++ If you change compilers or make other significant changes, you should
++ probably I<not> re-use your old config.sh.  Simply remove it or
++ rename it, e.g. mv config.sh config.sh.old.  Then rerun Configure
++ with the options you want to use.
++ 
++ This is a common source of problems.  If you change from B<cc> to
++ B<gcc>, you should almost always remove your old config.sh.
++ 
++ =item Propagating your changes
++ 
++ If you later make any changes to F<config.sh>, you should propagate
++ them to all the .SH files by running  B<Configure -S>.
++ 
++ =item config.over
++ 
++ You can also supply a shell script config.over to over-ride Configure's
++ guesses.  It will get loaded up at the very end, just before config.sh
++ is created.  You have to be careful with this, however, as Configure
++ does no checking that your changes make sense.
++ 
++ =item config.h
++ 
++ Many of the system dependencies are contained in F<config.h>.
++ F<Configure> builds F<config.h> by running the F<config_h.SH> script.
++ The values for the variables are taken from F<config.sh>.
++ 
++ If there are any problems, you can edit F<config.h> directly.  Beware,
++ though, that the next time you run B<Configure>, your changes will be
++ lost.
++ 
++ =item cflags
++ 
++ If you have any additional changes to make to the C compiler command
++ line, they can be done in F<cflags.SH>.  For instance, to turn off the
++ optimizer on F<toke.c>, find the line in the switch structure for
++ F<toke.c> and put the command C<optimize='-g'> before the C<;;>.  You
++ can also edit F<cflags> directly, but beware that your changes will be
++ lost the next time you run B<Configure>.
++ 
++ To change the C flags for all the files, edit F<config.sh>
++ and change either C<$ccflags> or C<$optimize>,
++ and then re-run  B<Configure -S ; make depend>.
++ 
++ =item No sh.
++ 
++ If you don't have sh, you'll have to copy the sample file config_H to
++ config.h and edit the config.h to reflect your system's peculiarities.
++ You'll probably also have to extensively modify the extension building
++ mechanism.
++ 
++ =back
++ 
++ =head1 make depend
++ 
++ This will look for all the includes.
++ The output is stored in F<makefile>.  The only difference between
++ F<Makefile> and F<makefile> is the dependencies at the bottom of
++ F<makefile>.  If you have to make any changes, you should edit
++ F<makefile>, not F<Makefile> since the Unix B<make> command reads
++ F<makefile>.
++ 
++ Configure will offer to do this step for you, so it isn't listed
++ explicitly above.
++ 
++ =head1 make
++ 
++ This will attempt to make perl in the current directory.
++ 
++ If you can't compile successfully, try some of the following ideas.
++ 
++ =over 4
++ 
++ =item *
++ 
++ If you used a hint file, try reading the comments in the hint file
++ for further tips and information.
++ 
++ =item *
++ 
++ If you can't compile successfully, try adding a C<-DCRIPPLED_CC> flag.
++ (Just because you get no errors doesn't mean it compiled right!)
++ This simplifies some complicated expressions for compilers that
++ get indigestion easily.  If that has no effect, try turning off
++ optimization.  If you have missing routines, you probably need to
++ add some library or other, or you need to undefine some feature that
++ Configure thought was there but is defective or incomplete.
++ 
++ =item *
++ 
++ Some compilers will not compile or optimize the larger files without
++ some extra switches to use larger jump offsets or allocate larger
++ internal tables.  You can customize the switches for each file in
++ F<cflags>.  It's okay to insert rules for specific files into
++ F<makefile> since a default rule only takes effect in the absence of a
++ specific rule.
++ 
++ =item *
++ 
++ If you can successfully build F<miniperl>, but the process crashes
++ during the building of extensions, you should run
++ 
++     	make minitest
++ 
++ to test your version of miniperl.
++ 
++ =item *
++ 
++ Some additional things that have been reported for either perl4 or perl5:
++ 
++ Genix may need to use libc rather than libc_s, or #undef VARARGS.
++ 
++ NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
++ 
++ UTS may need one or more of B<-DCRIPPLED_CC>, B<-K> or B<-g>, and undef LSTAT.
++ 
++ If you get syntax errors on '(', try -DCRIPPLED_CC.
++ 
++ Machines with half-implemented dbm routines will need to #undef I_ODBM
++ 
++ SCO prior to 3.2.4 may be missing dbmclose().  An upgrade to 3.2.4
++ that includes libdbm.nfs (which includes dbmclose()) may be available.
++ 
++ If you get duplicates upon linking for malloc et al, say -DHIDEMYMALLOC.
++ 
++ If you get duplicate function definitions (a perl function has the
++ same name as another function on your system) try -DEMBED.
++ 
++ If you get varags problems with gcc, be sure that gcc is installed
++ correctly.  When using gcc, you should probably have i_stdarg='define'
++ and i_varags='undef' in config.sh.  The problem is usually solved
++ by running fixincludes correctly.
++ 
++ If you wish to use dynamic loading on SunOS or Solaris, and you
++ have GNU as and GNU ld installed, you may need to add B<-B/bin/> to
++ your $ccflags and $ldflags so that the system's versions of as
++ and ld are used.
++ 
++ If you run into dynamic loading problems, check your setting of
++ the LD_LIBRARY_PATH environment variable.  Perl should build
++ fine with LD_LIBRARY_PATH unset, though that may depend on details
++ of your local set-up.
++ 
++ =back
++ 
++ =head1 make test
++ 
++ This will run the regression tests on the perl you just made.  If it
++ doesn't say "All tests successful" then something went wrong.  See the
++ file F<t/README> in the F<t> subdirectory.  Note that you can't run it
++ in background if this disables opening of /dev/tty.  If B<make test>
++ bombs out, just B<cd> to the F<t> directory and run B<TEST> by hand
++ to see if it makes any difference.
++ If individual tests bomb, you can run them by hand, e.g.,
++ 
++ 	./perl op/groups.t
++ 
++ =head1 INSTALLING PERL5
++ 
++ =head1 make install
++ 
++ This will put perl into the public directory you specified to
++ B<Configure>; by default this is F</usr/local/bin>.  It will also try
++ to put the man pages in a reasonable place.  It will not nroff the man
++ page, however.  You may need to be root to run B<make install>.  If you
++ are not root, you must own the directories in question and you should
++ ignore any messages about chown not working.
++ 
++ If you want to see exactly what will happen without installing
++ anything, you can run
++ 	
++ 	./perl installperl -n
++ 	./perl installman -n
++ 
++ B<make install> will install the following:
++ 
++ 	perl,
++ 	    perl5.nnn	where nnn is the current release number.  This
++ 			will be a link to perl.
++ 	suidperl,
++ 	    sperl5.nnn	If you requested setuid emulation.
++ 	a2p          	awk-to-perl translator
++ 	cppstdin	This is used by perl -P, if your cc -E can't
++ 			read from stdin.
++ 	c2ph, pstruct	Scripts for handling C structures in header files.
++ 	s2p		sed-to-perl translator
++ 	find2perl	find-to-perl translator
++ 	h2xs		Converts C .h header files to Perl extensions.
++ 	perldoc		Tool to read perl's pod documentation.
++ 	pod2html,	Converters from perl's pod documentation format
++ 	pod2latex, and 	to other useful formats.
++ 	pod2man
++ 
++ 	library files	in $privlib and $archlib specified to
++ 			Configure, usually under /usr/local/lib/perl5/.
++ 	man pages	in the location specified to Configure, usually
++ 			something like /usr/local/man/man1.
++ 	module		in the location specified to Configure, usually
++ 	man pages	under /usr/local/lib/perl5/man/man3.
++ 	pod/*.pod	in $privlib/pod/.
++ 
++ Perl's *.h header files and the libperl.a library are also
++ installed under $archlib so that you may later build new
++ extensions even if the Perl source is no longer available.
++ 
++ make install may also offer to install perl in a "standard" location.
++ 
++ Most of the documentation in the pod/ directory is also available
++ in HTML and LaTeX format.  Type
++ 
++ 	cd pod; make html; cd ..
++ 
++ to generate the html versions, and
++ 
++ 	cd pod; make tex; cd ..
++ 
++ to generate the LaTeX versions.
++ 
++ =head1 Coexistence with perl4
++ 
++ You can safely install perl5 even if you want to keep perl4 around.
++ 
++ By default, the perl5 libraries go into F</usr/local/lib/perl5/>, so
++ they don't override the perl4 libraries in F</usr/local/lib/perl/>.
++ 
++ In your /usr/local/bin directory, you should have a binary named
++ F<perl4.036>.  That will not be touched by the perl5 installation
++ process.  Most perl4 scripts should run just fine under perl5.
++ However, if you have any scripts that require perl4, you can replace
++ the C<#!> line at the top of them by C<#!/usr/local/bin/perl4.036>
++ (or whatever the appropriate pathname is).
++ 
++ =head1 DOCUMENTATION
++ 
++ Read the manual entries before running perl.  The main documentation is
++ in the pod/ subdirectory and should have been installed during the
++ build process.  Type B<man perl> to get started.  Alternatively, you
++ can type B<perldoc perl> to use the supplied B<perldoc> script.  This
++ is sometimes useful for finding things in the library modules.
++ 
++ =head1 AUTHOR
++ 
++ Andy Dougherty <doughera@lafcol.lafayette.edu>, borrowing I<very> heavily
++ from the original README by Larry Wall.
++ 27 September 1995
+Index: MANIFEST
+*** perl5.001m/MANIFEST	Wed Jun 21 16:09:44 1995
+--- perl5.001n/MANIFEST	Tue Sep 26 23:15:33 1995
+***************
+*** 1,10 ****
+--- 1,12 ----
+  Artistic		The "Artistic License"
+  Changes			Differences from previous versions.
+  Changes.Conf		Recent changes in the Configure & build process
++ configure		Crude emulation of GNU configure
+  Configure		Portability tool
+  Copying			The GNU General Public License
+  Doc/perl5-notes		Samples of new functionality
+  EXTERN.h		Included before foreign .h files
++ INSTALL			Detailed installation instructions.
+  INTERN.h		Included before domestic .h files
+  MANIFEST		This list of files
+  Makefile.SH		A script that generates Makefile
+***************
+*** 20,26 ****
+  config_H		Sample config.h
+  config_h.SH		Produces config.h
+  configpm		Produces lib/Config.pm
+- configure		Crude emulation of GNU configure
+  cop.h			Control operator header
+  cv.h			Code value header
+  deb.c			Debugging routines
+--- 22,27 ----
+Index: Makefile.SH
+*** perl5.001m/Makefile.SH	Wed Jun 21 16:43:11 1995
+--- perl5.001n/Makefile.SH	Wed Sep 27 13:32:10 1995
+***************
+*** 92,98 ****
+  
+  # The following are mentioned only to make metaconfig include the
+  # appropriate questions in Configure.  If you want to change these,
+! # edit config.sh instead, or specify --man1dir=/wherever on 
+  # installman commandline.
+  bin = $installbin
+  scriptdir = $scriptdir
+--- 92,98 ----
+  
+  # The following are mentioned only to make metaconfig include the
+  # appropriate questions in Configure.  If you want to change these,
+! # edit config.sh instead, or specify --man1dir=/wherever on
+  # installman commandline.
+  bin = $installbin
+  scriptdir = $scriptdir
+***************
+*** 318,324 ****
+  	perl keywords.pl
+  	perl opcode.pl
+  	perl embed.pl
+!  
+  # Extensions:
+  # Names added to $(dynamic_ext) or $(static_ext) will automatically
+  # get built.  There should ordinarily be no need to change any of
+--- 318,324 ----
+  	perl keywords.pl
+  	perl opcode.pl
+  	perl embed.pl
+! 
+  # Extensions:
+  # Names added to $(dynamic_ext) or $(static_ext) will automatically
+  # get built.  There should ordinarily be no need to change any of
+***************
+*** 351,357 ****
+  realclean: clean
+  	-cd x2p; $(MAKE) realclean
+  	-cd pod; $(MAKE) realclean
+! 	@for x in $(DYNALOADER) $(dynamic_ext) $(static_ext) ; do \
+  	sh ext/util/make_ext realclean $$x ; \
+  	done
+  	rm -f *.orig */*.orig *~ */*~ core t/core t/c t/perl
+--- 351,357 ----
+  realclean: clean
+  	-cd x2p; $(MAKE) realclean
+  	-cd pod; $(MAKE) realclean
+! 	-@for x in $(DYNALOADER) $(dynamic_ext) $(static_ext) ; do \
+  	sh ext/util/make_ext realclean $$x ; \
+  	done
+  	rm -f *.orig */*.orig *~ */*~ core t/core t/c t/perl
+Index: README
+*** perl5.001m/README	Fri Jun  2 11:38:22 1995
+--- perl5.001n/README	Wed Sep 27 14:53:57 1995
+***************
+*** 6,12 ****
+  
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of either:
+!     
+  	a) the GNU General Public License as published by the Free
+  	Software Foundation; either version 1, or (at your option) any
+  	later version, or
+--- 6,12 ----
+  
+      This program is free software; you can redistribute it and/or modify
+      it under the terms of either:
+! 
+  	a) the GNU General Public License as published by the Free
+  	Software Foundation; either version 1, or (at your option) any
+  	later version, or
+***************
+*** 62,266 ****
+  
+  Installation
+  
+! 1)  Run Configure.  This will figure out various things about your
+!     system.  Some things Configure will figure out for itself, other
+!     things it will ask you about.  If the test scripts and programs
+!     run ok, the defaults will usually be right.  It will then proceed to
+!     make config.h, config.sh, and Makefile.  You may have to explicitly
+!     say     sh Configure    to ensure that Configure is run under sh.
+!     If you're a hotshot, run Configure -d to take all the defaults
+!     and edit config.sh to patch up any flaws.
+! 
+!     If you later make any changes to config.sh, you should propagate
+!     them to all the .SH files by running  Configure -S.
+! 
+!     Configure supports a number of useful options.  Run Configure -h 
+!     to get a listing.  To compile with gcc, for example, you can run 
+!     Configure -Dcc=gcc, or answer 'gcc' at the cc prompt.  
+!     
+!     If you wish to use gcc (or another alternative compiler)
+!     you should use  Configure -Dcc=gcc.  That way, the the hints
+!     files can set appropriate defaults.
+! 
+!     By default, perl will be installed in /usr/local/{bin, lib, man}.
+!     You can specify a different 'prefix' for the default installation
+!     directory, when Configure prompts you or by using the Configure
+!     command line option -Dprefix='/some/directory'.
+!     
+!     By default, perl will use dynamic extensions if your system
+!     supports it.  If you want to force perl to be compiled statically,
+!     you can either choose this when Configure prompts you or by using
+!     the Configure command line option -Uusedl
+! 
+!     If you change compilers or make other significant changes, you should
+!     probably _not_ re-use your old config.sh.  Simply remove it or
+!     rename it, e.g. mv config.sh config.sh.old.  Then rerun Configure
+!     with the options you want to use.
+! 
+!     You can also supply a file config.over to over-ride Configure's
+!     guesses.  It will get loaded up at the very end, just before
+!     config.sh is created.
+! 
+!     You might possibly have to trim # comments from the front of Configure
+!     if your sh doesn't handle them, but all other # comments will be taken
+!     care of.
+! 
+!     (If you don't have sh, you'll have to copy the sample file config_H to
+!     config.h and edit the config.h to reflect your system's peculiarities.)
+! 
+! 2)  Glance through config.h to make sure system dependencies are correct.
+!     Most of them should have been taken care of by running the Configure script.
+! 
+!     If you have any additional changes to make to the C definitions, they
+!     can be done in cflags.SH.  For instance, to turn off the optimizer
+!     on toke.c, find the line in the switch structure for toke.c and
+!     put the command optimize='-g' before the ;;.  To change the C flags
+!     for all the files, edit config.sh and change either $ccflags or $optimize,
+!     and then re-run  Configure -S ; make depend.
+! 
+! 
+! 3)  make depend
+! 
+!     This will look for all the includes and modify Makefile accordingly.
+!     Configure will offer to do this for you.
+! 
+! 4)  make
+! 
+!     This will attempt to make perl in the current directory.
+! 
+!     If you can't compile successfully, try adding a -DCRIPPLED_CC flag.
+!     (Just because you get no errors doesn't mean it compiled right!)
+!     This simplifies some complicated expressions for compilers that
+!     get indigestion easily.  If that has no effect, try turning off
+!     optimization.  If you have missing routines, you probably need to
+!     add some library or other, or you need to undefine some feature that
+!     Configure thought was there but is defective or incomplete.
+! 
+!     Some compilers will not compile or optimize the larger files without
+!     some extra switches to use larger jump offsets or allocate larger
+!     internal tables.  You can customize the switches for each file in
+!     cflags.SH.  It's okay to insert rules for specific files into
+!     Makefile.SH, since a default rule only takes effect in the
+!     absence of a specific rule.
+! 
+!     If you used a hint file, try reading the comments in the hint file
+!     for further tips and information.
+! 
+!     If you can successfully build miniperl, but the process crashes
+!     during the building of extensions, you should run
+!     	make minitest
+!     to test your version of miniperl.
+! 
+!     Some additional things that have been reported for either perl4 or
+!     perl5:
+! 
+!     Genix may need to use libc rather than libc_s, or #undef VARARGS.
+! 
+!     NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
+! 
+!     UTS may need one or more of -DCRIPPLED_CC, -K or -g, and undef LSTAT.
+! 
+!     If you get syntax errors on '(', try -DCRIPPLED_CC.
+! 
+!     Machines with half-implemented dbm routines will need to #undef I_ODBM 
+! 
+!     SCO prior to 3.2.4 may be missing dbmclose().  An upgrade to 3.2.4
+!     that includes libdbm.nfs (which includes dbmclose()) may be available.
+! 
+!     If you get duplicates upon linking for malloc et al, say -DHIDEMYMALLOC.
+! 
+!     If you get duplicate function definitions (a perl function has the
+!     same name as another function on your system) try -DEMBED.
+! 
+!     If you get varags problems with gcc, be sure that gcc is installed
+!     correctly.  When using gcc, you should probably have i_stdarg='define'
+!     and i_varags='undef' in config.sh.  The problem is usually solved
+!     by running fixincludes correctly.
+! 
+!     If you wish to use dynamic loading on SunOS or Solaris, and you
+!     have GNU as and GNU ld installed, you may need to add -B/bin/ to
+!     your $ccflags and $ldflags so that the system's versions of as 
+!     and ld are used.
+! 
+!     If you run into dynamic loading problems, check your setting of
+!     the LD_LIBRARY_PATH environment variable.  Perl should build 
+!     fine with LD_LIBRARY_PATH unset, though that may depend on details
+!     of your local set-up.
+! 
+! 5)  make test
+! 
+!     This will run the regression tests on the perl you just made.
+!     If it doesn't say "All tests successful" then something went wrong.
+!     See the README in the t subdirectory.  Note that you can't run it
+!     in background if this disables opening of /dev/tty.  If "make test"
+!     bombs out, just cd to the t directory and run TEST by hand to see if
+!     it makes any difference.  If individual tests bomb, you can run
+!     them by hand, e.g., ./perl op/groups.t
+! 
+! 6)  make install
+! 
+!     This will put perl into a public directory (such as
+!     /usr/local/bin).  It will also try to put the man pages in a
+!     reasonable place.  It will not nroff the man page, however.  You
+!     may need to be root to run make install.  If you are not root, you
+!     must own the directories in question and you should ignore any
+!     messages about chown not working.
+! 
+!     make install will install the following:
+! 	perl,
+! 	    perl5.nnn	where nnn is the current release number.  This
+! 			will be a link to perl.
+! 	suidperl,
+! 	    sperl5.nnn	If you requested setuid emulation.
+! 	a2p          	awk-to-perl translator
+! 	cppstdin	This is used by perl -P, if your cc -E can't
+! 			read from stdin.
+! 	c2ph, pstruct	Scripts for handling C structures in header files.
+! 	s2p		sed-to-perl translator
+! 	find2perl	find-to-perl translator
+! 	h2xs		Converts C .h header files to Perl extensions.
+! 	perldoc		Tool to read perl's pod documentation.
+! 	pod2html,	Converters from perl's pod documentation format
+! 	pod2latex, and 	to other useful formats.
+! 	pod2man
+! 
+! 	library files	in $privlib and $archlib specified to
+! 			Configure, usually under /usr/local/lib/perl5/.
+! 	man pages	in the location specified to Configure, usually
+! 			something like /usr/local/man/man1.
+! 	module		in the location specified to Configure, usually
+! 	man pages	under /usr/local/lib/perl5/man/man3.
+! 	pod/*.pod	in $privlib/pod/.
+! 
+! 	Perl's *.h header files and the libperl.a library are also
+! 	installed under $archlib so that you may later build new
+! 	extensions even if the Perl source is no longer available.
+! 	
+! 	make install may also offer to install perl in a "standard" location.
+! 	
+!     Most of the documentation in the pod/ directory is also available 
+!     in HTML and LaTeX format.  Type
+! 	cd pod; make html; cd ..
+!     to generate the html versions, and
+! 	cd pod; make tex; cd ..
+!     to generate the LaTeX versions.
+! 
+! 7)  Read the manual entries before running perl.
+! 
+! 8)  IMPORTANT!  Help save the world!  Communicate any problems and suggested
+!     patches to me, lwall@netlabs.com (Larry Wall), so we can
+!     keep the world in sync.  If you have a problem, there's someone else
+!     out there who either has had or will have the same problem.
+! 
+!     If possible, send in patches such that the patch program will apply them.
+!     Context diffs are the best, then normal diffs.  Don't send ed scripts--
+!     I've probably changed my copy since the version you have.  It's also
+!     helpful if you send the output of "uname -a".
+! 
+!     Watch for perl patches in comp.lang.perl.  Patches will generally be
+!     in a form usable by the patch program.  If you are just now bringing up
+!     perl and aren't sure how many patches there are, write to me and I'll
+!     send any you don't have.  Your current patch level is shown in patchlevel.h.
+  
+  
+  Just a personal note:  I want you to know that I create nice things like this
+--- 62,95 ----
+  
+  Installation
+  
+! 1) Detailed instructions are in the file INSTALL.  In brief, the
+! following should work on most systems:
+! 	rm -f config.sh
+! 	sh Configure
+! 	make
+! 	make test
+! 	make install
+! For most systems, it should be safe to accept all the Configure
+! defaults.
+! 
+! 2) Read the manual entries before running perl.
+! 
+! 3) IMPORTANT!  Help save the world!  Communicate any problems and suggested
+! patches to me, lwall@netlabs.com (Larry Wall), so we can
+! keep the world in sync.  If you have a problem, there's someone else
+! out there who either has had or will have the same problem.
+! It's usually helpful if you send the output of the "myconfig" script
+! in the main perl directory.
+! 
+! If possible, send in patches such that the patch program will apply them.
+! Context diffs are the best, then normal diffs.  Don't send ed scripts--
+! I've probably changed my copy since the version you have.
+! 
+! Watch for perl patches in comp.lang.perl.announce.  Patches will generally
+! be in a form usable by the patch program.  If you are just now bringing
+! up perl and aren't sure how many patches there are, write to me and I'll
+! send any you don't have.  Your current patch level is shown in
+! patchlevel.h.
+  
+  
+  Just a personal note:  I want you to know that I create nice things like this
+Index: config_H
+Prereq:  3.0.1.3 
+*** perl5.001m/config_H	Tue Jun  6 13:16:32 1995
+--- perl5.001n/config_H	Tue Jul 25 17:46:18 1995
+***************
+*** 14,20 ****
+   * $Id: Config_h.U,v 3.0.1.3 1995/01/30 14:25:39 ram Exp $
+   */
+  
+! /* Configuration time: Tue Jun  6 12:34:26 EDT 1995
+   * Configured by: andy
+   * Target system: crystal crystal 3.2 2 i386 
+   */
+--- 14,20 ----
+   * $Id: Config_h.U,v 3.0.1.3 1995/01/30 14:25:39 ram Exp $
+   */
+  
+! /* Configuration time: Tue Jul 25 15:36:03 EDT 1995
+   * Configured by: andy
+   * Target system: crystal crystal 3.2 2 i386 
+   */
+Index: config_h.SH
+Prereq:  3.0.1.3 
+*** perl5.001m/config_h.SH	Thu Jun 22 11:03:49 1995
+--- perl5.001n/config_h.SH	Wed Sep 27 11:40:01 1995
+***************
+*** 54,65 ****
+   */
+  #define BIN "$bin"	/**/
+  
+- /* BYTEORDER:
+-  *	This symbol hold the hexadecimal constant defined in byteorder,
+-  *	i.e. 0x1234 or 0x4321, etc...
+-  */
+- #define BYTEORDER 0x$byteorder	/* large digits for MSB */
+- 
+  /* CAT2:
+   *	This macro catenates 2 tokens together.
+   */
+--- 54,59 ----
+***************
+*** 301,323 ****
+   */
+  #$d_fsetpos HAS_FSETPOS	/**/
+  
+- /* Gconvert:
+-  *	This preprocessor macro is defined to convert a floating point
+-  *	number to a string without a trailing decimal point.  This
+-  *	emulates the behavior of sprintf("%g"), but is sometimes much more
+-  *	efficient.  If gconvert() is not available, but gcvt() drops the
+-  *	trailing decimal point, then gcvt() is used.  If all else fails,
+-  *	a macro using sprintf("%g") is used. Arguments for the Gconvert
+-  *	macro are: value, number of digits, whether trailing zeros should
+-  *	be retained, and the output buffer.
+-  *	Possible values are:
+-  *		d_Gconvert='gconvert((x),(n),(t),(b))'
+-  *		d_Gconvert='gcvt((x),(n),(b))'
+-  *		d_Gconvert='sprintf((b),"%.*g",(n),(x))'
+-  *	The last two assume trailing zeros should not be kept.
+-  */
+- #define Gconvert(x,n,t,b) $d_Gconvert
+- 
+  /* HAS_GETGROUPS:
+   *	This symbol, if defined, indicates that the getgroups() routine is
+   *	available to get the list of process groups.  If unavailable, multiple
+--- 295,300 ----
+***************
+*** 1274,1285 ****
+   */
+  #$i_vfork I_VFORK	/**/
+  
+- /* INTSIZE:
+-  *	This symbol contains the size of an int, so that the C preprocessor
+-  *	can make decisions based on it.
+-  */
+- #define INTSIZE $intsize		/**/
+- 
+  /* Off_t:
+   *	This symbol holds the type used to declare offsets in the kernel.
+   *	It can be int, long, off_t, etc... It may be necessary to include
+--- 1251,1256 ----
+***************
+*** 1341,1356 ****
+   */
+  #define Select_fd_set_t 	$selecttype	/**/
+  
+- /* SIG_NAME:
+-  *	This symbol contains a list of signal names in order. This is intended
+-  *	to be used as a static array initialization, like this:
+-  *		char *sig_name[] = { SIG_NAME };
+-  *	The signals in the list are separated with commas, and each signal
+-  *	is surrounded by double quotes. There is no leading SIG in the signal
+-  *	name, i.e. SIGQUIT is known as "QUIT".
+-  */
+- #define SIG_NAME "`echo $sig_name | sed 's/ /","/g'`"	/**/
+- 
+  /* Size_t:
+   *	This symbol holds the type used to declare length parameters
+   *	for string functions.  It is usually size_t, but may be
+--- 1312,1317 ----
+***************
+*** 1382,1412 ****
+   */
+  #define Uid_t $uidtype		/* UID type */
+  
+- /* VOIDFLAGS:
+-  *	This symbol indicates how much support of the void type is given by this
+-  *	compiler.  What various bits mean:
+-  *
+-  *	    1 = supports declaration of void
+-  *	    2 = supports arrays of pointers to functions returning void
+-  *	    4 = supports comparisons between pointers to void functions and
+-  *		    addresses of void functions
+-  *	    8 = suports declaration of generic void pointers
+-  *
+-  *	The package designer should define VOIDUSED to indicate the requirements
+-  *	of the package.  This can be done either by #defining VOIDUSED before
+-  *	including config.h, or by defining defvoidused in Myinit.U.  If the
+-  *	latter approach is taken, only those flags will be tested.  If the
+-  *	level of void support necessary is not present, defines void to int.
+-  */
+- #ifndef VOIDUSED
+- #define VOIDUSED $defvoidused
+- #endif
+- #define VOIDFLAGS $voidflags
+- #if (VOIDFLAGS & VOIDUSED) != VOIDUSED
+- #define void int		/* is void to be avoided? */
+- #define M_VOID			/* Xenix strikes again */
+- #endif
+- 
+  /* VMS:
+   *	This symbol, if defined, indicates that the program is running under
+   *	VMS.  It is currently only set in conjunction with the EUNICE symbol.
+--- 1343,1348 ----
+***************
+*** 1418,1423 ****
+--- 1354,1365 ----
+   */
+  #define LOC_SED 	"$full_sed"	/**/
+  
++ /* BYTEORDER:
++  *	This symbol hold the hexadecimal constant defined in byteorder,
++  *	i.e. 0x1234 or 0x4321, etc...
++  */
++ #define BYTEORDER 0x$byteorder	/* large digits for MSB */
++ 
+  /* CSH:
+   *	This symbol, if defined, indicates that the C-shell exists.
+   *	If defined, contains the full pathname of csh.
+***************
+*** 1432,1449 ****
+--- 1374,1425 ----
+   */
+  #$d_dlsymun 	DLSYM_NEEDS_UNDERSCORE 	/* */
+  
++ /* Gconvert:
++  *	This preprocessor macro is defined to convert a floating point
++  *	number to a string without a trailing decimal point.  This
++  *	emulates the behavior of sprintf("%g"), but is sometimes much more
++  *	efficient.  If gconvert() is not available, but gcvt() drops the
++  *	trailing decimal point, then gcvt() is used.  If all else fails,
++  *	a macro using sprintf("%g") is used. Arguments for the Gconvert
++  *	macro are: value, number of digits, whether trailing zeros should
++  *	be retained, and the output buffer.
++  *	Possible values are:
++  *		d_Gconvert='gconvert((x),(n),(t),(b))'
++  *		d_Gconvert='gcvt((x),(n),(b))'
++  *		d_Gconvert='sprintf((b),"%.*g",(n),(x))'
++  *	The last two assume trailing zeros should not be kept.
++  */
++ #define Gconvert(x,n,t,b) $d_Gconvert
++ 
+  /* USE_DYNAMIC_LOADING:
+   *	This symbol, if defined, indicates that dynamic loading of
+   *	some sort is available.
+   */
+  #$usedl USE_DYNAMIC_LOADING		/**/
+  
++ /* I_DBM:
++  *	This symbol, if defined, indicates that <dbm.h> exists and should
++  *	be included.
++  */
++ /* I_RPCSVC_DBM:
++  *	This symbol, if defined, indicates that <rpcsvc/dbm.h> exists and
++  *	should be included.
++  */
++ #$i_dbm I_DBM	/**/
++ #$i_rpcsvcdbm I_RPCSVC_DBM	/**/
++ 
+  /* I_SYS_STAT:
+   *	This symbol, if defined, indicates to the C program that it should
+   *	include <sys/stat.h>.
+   */
+  #$i_sysstat	I_SYS_STAT		/**/
+  
++ /* INTSIZE:
++  *	This symbol contains the size of an int, so that the C preprocessor
++  *	can make decisions based on it.
++  */
++ #define INTSIZE $intsize		/**/
++ 
+  /* Free_t:
+   *	This variable contains the return type of free().  It is usually
+   * void, but occasionally int.
+***************
+*** 1459,1469 ****
+--- 1435,1480 ----
+   */
+  #$d_mymalloc MYMALLOC			/**/
+  
++ /* SIG_NAME:
++  *	This symbol contains a list of signal names in order. This is intended
++  *	to be used as a static array initialization, like this:
++  *		char *sig_name[] = { SIG_NAME };
++  *	The signals in the list are separated with commas, and each signal
++  *	is surrounded by double quotes. There is no leading SIG in the signal
++  *	name, i.e. SIGQUIT is known as "QUIT".
++  */
++ #define SIG_NAME "`echo $sig_name | sed 's/ /","/g'`"	/**/
++ 
+  /* SITELIB_EXP:
+   *	This symbol contains the ~name expanded version of SITELIB, to be used
+   *	in programs that are not prepared to deal with ~ expansion at run-time.
+   */
+  #$d_sitelib SITELIB_EXP "$sitelibexp"		/**/
++ 
++ /* VOIDFLAGS:
++  *	This symbol indicates how much support of the void type is given by this
++  *	compiler.  What various bits mean:
++  *
++  *	    1 = supports declaration of void
++  *	    2 = supports arrays of pointers to functions returning void
++  *	    4 = supports comparisons between pointers to void functions and
++  *		    addresses of void functions
++  *	    8 = suports declaration of generic void pointers
++  *
++  *	The package designer should define VOIDUSED to indicate the requirements
++  *	of the package.  This can be done either by #defining VOIDUSED before
++  *	including config.h, or by defining defvoidused in Myinit.U.  If the
++  *	latter approach is taken, only those flags will be tested.  If the
++  *	level of void support necessary is not present, defines void to int.
++  */
++ #ifndef VOIDUSED
++ #define VOIDUSED $defvoidused
++ #endif
++ #define VOIDFLAGS $voidflags
++ #if (VOIDFLAGS & VOIDUSED) != VOIDUSED
++ #define void int		/* is void to be avoided? */
++ #define M_VOID			/* Xenix strikes again */
++ #endif
+  
+  #endif
+  !GROK!THIS!
+Index: configure
+*** perl5.001m/configure	Fri May 26 14:32:51 1995
+--- perl5.001n/configure	Wed Sep 27 10:23:29 1995
+***************
+*** 1,65 ****
+  #! /bin/sh
+  # GNU configure-like front end to metaconfig's Configure.
+  #
+! # Written by Andy Dougherty (doughera@lafcol.lafayette.edu)
+! # and matthew green (mrg@mame.mu.oz.au)
+  #
+- # public domain.
+  
+  opts=''
+! for f in $*
+! do
+!   case $f in
+      --help)
+!       echo This is GNU configure-like front end for a MetaConfig Configure.
+!       echo It understands the follow GNU configure options:
+!       echo "  --prefix=PREFIX"
+!       echo "  --help"
+!       echo ""
+!       echo And these environment variables:
+!       echo "  CFLAGS"
+!       echo "  CC"
+!       echo "  DEFS"
+!       echo 0
+!       ;;
+!     --prefix=*)
+!       shift
+!       arg=`echo $f | sed 's/--prefix=/-Dprefix=/'`
+!       opts="$opts $arg"
+!       ;;
+!     --*)
+!       opt=`echo $f | sed 's/=.*//'`
+!       echo This GNU configure front end does not understand $opt
+!       exit 1
+!       ;;
+!     *)
+!       shift
+!       opts="$opts $f"
+!       ;;
+!   esac
+  done
+  
+  case "$CC" in
+!   '') ;;
+!   *) opts="$opts -Dcc='$CC'" ;;
+  esac
+  
+! # join DEFS and CFLAGS together.
+! 
+  ccflags=''
+! if test "x$DEFS" != x
+! then
+!   ccflags=$DEFS
+! fi
+! if test "x$CFLAGS" != x
+! then
+!   ccflags="$ccflags $CFLAGS"
+! fi
+! 
+! if test "x$ccflags" != x
+! then
+!   opts="$opts -Dccflags='$ccflags'"
+! fi
+  
+! echo ./Configure "$opts" -des
+! ./Configure "$opts" -des
+--- 1,108 ----
+  #! /bin/sh
++ #
++ # $Id: configure,v 3.0.1.1 1995/07/25 14:16:21 ram Exp $
++ #
+  # GNU configure-like front end to metaconfig's Configure.
+  #
+! # Written by Andy Dougherty <doughera@lafcol.lafayette.edu>
+! # and Matthew Green <mrg@mame.mu.oz.au>.
+! #
+! # Reformatted and modified for inclusion in the dist-3.0 package by
+! # Raphael Manfredi <ram@hptnos02.grenoble.hp.com>.
+! #
+! # This script belongs to the public domain and may be freely redistributed.
+! #
+! # The remaining of this leading shell comment may be removed if you
+! # include this script in your own package.
+! #
+! # $Log: configure,v $
+! # Revision 3.0.1.1  1995/07/25  14:16:21  ram
+! # patch56: created
+  #
+  
++ (exit $?0) || exec sh $0 $argv:q
+  opts=''
+! verbose=''
+! create='-e'
+! while test $# -gt 0; do
+! 	case $1 in
+      --help)
+! 		cat <<EOM
+! Usage: configure [options]
+! This is GNU configure-like front end for a metaconfig-generated Configure.
+! It emulates the following GNU configure options (must be fully spelled out):
+! 	--help
+! 	--no-create
+! 	--prefix=PREFIX
+! 	--quiet
+! 	--silent
+! 	--verbose
+! 	--version
+! 
+! And it honours these environment variables: CC, CFLAGS and DEFS.
+! EOM
+! 		exit 0
+! 		;;
+! 	--no-create)
+! 		create='-E'
+! 		shift
+! 		;;
+! 	--prefix=*)
+! 		arg=`echo $1 | sed 's/--prefix=/-Dprefix=/'`
+! 		opts="$opts $arg"
+! 		shift
+! 		;;
+! 	--quiet|--silent)
+! 		exec >/dev/null 2>&1
+! 		shift
+! 		;;
+! 	--verbose)
+! 		verbose=true
+! 		shift
+! 		;;
+! 	--version)
+! 		copt="$copt -V"
+! 		shift
+! 		;;
+! 	--*)
+! 		opt=`echo $1 | sed 's/=.*//'`
+! 		echo "This GNU configure front end does not understand $opt"
+! 		exit 1
+! 		;;
+! 	*)
+! 		opts="$opts $1"
+! 		shift
+! 		;;
+! 	esac
+  done
+  
+  case "$CC" in
+! '') ;;
+! *) opts="$opts -Dcc='$CC'";;
+  esac
+  
+! # Join DEFS and CFLAGS together.
+  ccflags=''
+! case "$DEFS" in
+! '') ;;
+! *) ccflags=$DEFS;;
+! esac
+! case "$CFLAGS" in
+! '') ;;
+! *) ccflags="$ccflags $CFLAGS";;
+! esac
+! case "$ccflags" in
+! '') ;;
+! *) opts="$opts -Dccflags='$ccflags'";;
+! esac
+! 
+! # Don't use -s if they want verbose mode
+! case "$verbose" in
+! '') copt="$copt -ds";;
+! *) copt="$copt -d";;
+! esac
+  
+! set X ./Configure $copt $create $opts
+! shift
+! echo "$@"
+! exec "$@"
+Index: embed.h
+*** perl5.001m/embed.h	Thu Jun 22 10:28:09 1995
+--- perl5.001n/embed.h	Wed Jul 12 10:20:04 1995
+***************
+*** 862,871 ****
+  #define q		Perl_q
+  #define ref		Perl_ref
+  #define refkids		Perl_refkids
+! #define pregcomp	Perl_pregcomp
+  #define regdump		Perl_regdump
+! #define pregexec	Perl_pregexec
+! #define pregfree	Perl_pregfree
+  #define regnext		Perl_regnext
+  #define regprop		Perl_regprop
+  #define repeatcpy	Perl_repeatcpy
+--- 862,871 ----
+  #define q		Perl_q
+  #define ref		Perl_ref
+  #define refkids		Perl_refkids
+! #define regcomp		Perl_regcomp
+  #define regdump		Perl_regdump
+! #define regexec		Perl_regexec
+! #define regfree		Perl_regfree
+  #define regnext		Perl_regnext
+  #define regprop		Perl_regprop
+  #define repeatcpy	Perl_repeatcpy
+Index: ext/ODBM_File/ODBM_File.xs
+*** perl5.001m/ext/ODBM_File/ODBM_File.xs	Sat Jan 14 23:55:24 1995
+--- perl5.001n/ext/ODBM_File/ODBM_File.xs	Tue Sep 12 11:46:16 1995
+***************
+*** 5,11 ****
+  #ifdef NULL
+  #undef NULL
+  #endif
+! #include <dbm.h>
+  
+  #include <fcntl.h>
+  
+--- 5,17 ----
+  #ifdef NULL
+  #undef NULL
+  #endif
+! #ifdef I_DBM
+! #  include <dbm.h>
+! #else
+! #  ifdef I_RPCSVC_DBM
+! #    include <rpcsvc/dbm.h>
+! #  endif
+! #endif
+  
+  #include <fcntl.h>
+  
+Index: global.sym
+*** perl5.001m/global.sym	Thu Jun 22 10:22:37 1995
+--- perl5.001n/global.sym	Wed Jul 12 09:27:24 1995
+***************
+*** 862,871 ****
+  q
+  ref
+  refkids
+! regcomp
+  regdump
+! regexec
+! regfree
+  regnext
+  regprop
+  repeatcpy
+--- 862,871 ----
+  q
+  ref
+  refkids
+! pregcomp
+  regdump
+! pregexec
+! pregfree
+  regnext
+  regprop
+  repeatcpy
+Index: h2xs.SH
+*** perl5.001m/h2xs.SH	Thu Jun  1 11:20:46 1995
+--- perl5.001n/h2xs.SH	Wed Sep 27 14:42:20 1995
+***************
+*** 186,192 ****
+  	$name;
+  };
+  
+! chdir 'ext' if -d 'ext';
+  
+  if( $module =~ /::/ ){
+  	$nested = 1;
+--- 186,192 ----
+  	$name;
+  };
+  
+! (chdir 'ext', $ext = 'ext/') if -d 'ext';
+  
+  if( $module =~ /::/ ){
+  	$nested = 1;
+***************
+*** 201,217 ****
+  }
+  
+  
+! die "Won't overwrite existing ext/$modpname\n" if -e $modpname;
+  # quick hack, should really loop over @modparts
+  mkdir($modparts[0], 0777) if $nested;
+  mkdir($modpname, 0777);
+! chdir($modpname) || die "Can't chdir ext/$modpname: $!\n";
+  
+! open(XS, ">$modfname.xs") || die "Can't create ext/$modpname/$modfname.xs: $!\n";
+! open(PM, ">$modfname.pm") || die "Can't create ext/$modpname/$modfname.pm: $!\n";
+  
+  $" = "\n\t";
+! warn "Writing ext/$modpname/$modfname.pm\n";
+  
+  print PM <<"END";
+  package $module;
+--- 201,217 ----
+  }
+  
+  
+! die "Won't overwrite existing $ext$modpname\n" if -e $modpname;
+  # quick hack, should really loop over @modparts
+  mkdir($modparts[0], 0777) if $nested;
+  mkdir($modpname, 0777);
+! chdir($modpname) || die "Can't chdir $ext$modpname: $!\n";
+  
+! open(XS, ">$modfname.xs") || die "Can't create $ext$modpname/$modfname.xs: $!\n";
+! open(PM, ">$modfname.pm") || die "Can't create $ext$modpname/$modfname.pm: $!\n";
+  
+  $" = "\n\t";
+! warn "Writing $ext$modpname/$modfname.pm\n";
+  
+  print PM <<"END";
+  package $module;
+***************
+*** 291,297 ****
+  close PM;
+  
+  
+! warn "Writing ext/$modpname/$modfname.xs\n";
+  
+  print XS <<"END";
+  #include "EXTERN.h"
+--- 291,297 ----
+  close PM;
+  
+  
+! warn "Writing $ext$modpname/$modfname.xs\n";
+  
+  print XS <<"END";
+  #include "EXTERN.h"
+***************
+*** 390,397 ****
+  close XS;
+  
+  
+! warn "Writing ext/$modpname/Makefile.PL\n";
+! open(PL, ">Makefile.PL") || die "Can't create ext/$modpname/Makefile.PL: $!\n";
+  
+  print PL <<'END';
+  use ExtUtils::MakeMaker;
+--- 390,397 ----
+  close XS;
+  
+  
+! warn "Writing $ext$modpname/Makefile.PL\n";
+! open(PL, ">Makefile.PL") || die "Can't create $ext$modpname/Makefile.PL: $!\n";
+  
+  print PL <<'END';
+  use ExtUtils::MakeMaker;
+Index: hints/aix.sh
+*** perl5.001m/hints/aix.sh	Wed Feb  8 19:43:13 1995
+--- perl5.001n/hints/aix.sh	Mon Jul 10 15:54:09 1995
+***************
+*** 32,40 ****
+      d_setreuid='undef'
+      ccflags='-D_ALL_SOURCE -D_ANSI_C_SOURCE -D_POSIX_SOURCE'
+      nm_opt='-B'
+-     scope_cflags='optimize=" "'
+      ;;
+  esac
+  
+  # Changes for dynamic linking by Wayne Scott <wscott@ichips.intel.com>
+  #
+--- 32,44 ----
+      d_setreuid='undef'
+      ccflags='-D_ALL_SOURCE -D_ANSI_C_SOURCE -D_POSIX_SOURCE'
+      nm_opt='-B'
+      ;;
+  esac
++ 
++ # The optimizer in 4.1.1 apparently generates bad code for scope.c.
++ # Configure doesn't offer an easy way to propagate extra variables
++ # only for certain cases, so the following contortion is required:
++ scope_cflags='case "$osvers" in 4.1*) optimize=" ";; esac'
+  
+  # Changes for dynamic linking by Wayne Scott <wscott@ichips.intel.com>
+  #
+Index: hints/hpux_9.sh
+*** perl5.001m/hints/hpux_9.sh	Tue Mar 28 16:26:21 1995
+--- perl5.001n/hints/hpux_9.sh	Tue Sep  5 10:21:39 1995
+***************
+*** 13,19 ****
+      optimize='+O1'
+      ;;
+  esac
+! libswanted='m dld'
+  # ccdlflags="-Wl,-E -Wl,-a,shared $ccdlflags"  # Force all shared?
+  ccdlflags="-Wl,-E $ccdlflags"
+  usemymalloc='y'
+--- 13,25 ----
+      optimize='+O1'
+      ;;
+  esac
+! # NDBM is problematical -- some sites have the shared libary,
+! # but you might want to install the binary on a site that
+! # doesn't have that shared library, in which case it won't work.
+! # What to do?
+! # This should be re-written to explicitly exclude problematic 
+! # libraries, and explain why those libraries should be excluded.
+! libswanted='m dld gdbm db'
+  # ccdlflags="-Wl,-E -Wl,-a,shared $ccdlflags"  # Force all shared?
+  ccdlflags="-Wl,-E $ccdlflags"
+  usemymalloc='y'
+Index: hints/isc.sh
+*** perl5.001m/hints/isc.sh	Sat Apr 15 10:30:51 1995
+--- perl5.001n/hints/isc.sh	Tue Sep 12 11:50:59 1995
+***************
+*** 33,37 ****
+  # compilation "redefinition" warnings, but they appear harmless.
+  # ccflags="$ccflags -D_SYSV3"
+  
+- # Pick up dbm.h in <rpcsvc/dbm.h>
+- ccflags="$ccflags -I/usr/include/rpcsvc"
+--- 33,35 ----
+Index: hints/isc_2.sh
+*** perl5.001m/hints/isc_2.sh	Tue Oct 18 12:33:15 1994
+--- perl5.001n/hints/isc_2.sh	Tue Sep 12 11:51:13 1995
+***************
+*** 17,24 ****
+  	ldflags="$ldflags -Xp"
+      	;;
+  esac
+- # Pick up dbm.h in <rpcsvc/dbm.h>
+- ccflags="$ccflags -I/usr/include/rpcsvc"
+  # Compensate for conflicts in <net/errno.h>
+  doio_cflags='ccflags="$ccflags -DENOTSOCK=103"'
+  pp_sys_cflags='ccflags="$ccflags -DENOTSOCK=103"'
+--- 17,22 ----
+Index: hints/solaris_2.sh
+*** perl5.001m/hints/solaris_2.sh	Wed Feb 22 14:37:04 1995
+--- perl5.001n/hints/solaris_2.sh	Wed Sep 27 16:50:43 1995
+***************
+*** 1,5 ****
+--- 1,14 ----
++ # hints/solaris_2.sh
++ # Last modified:  27 September 1995 by
++ # Andy Dougherty  <doughera@lafcol.lafayette.edu>
++ # Based on input from lots of folks, especially
++ # Dean Roehrich <roehrich@ironwood-fddi.cray.com>
++ # 
++ # See man vfork.
+  usevfork=false
++ #
+  d_suidsafe=define
++ # Avoid all libraries in /usr/ucblib.
+  set `echo $glibpth | sed -e 's@/usr/ucblib@@'`
+  glibpth="$*"
+  # Remove bad libraries.  -lucb contains incompatible routines.
+***************
+*** 29,39 ****
+  *) ;;
+  esac
+  
+  case $PATH in
+! */usr/ucb*:/usr/bin:*) cat <<END
+  NOTE:  Some people have reported problems with /usr/ucb/cc.  
+  Remove /usr/ucb from your PATH if you have difficulties.
+  END
+  ;;
+  esac
+  
+--- 38,348 ----
+  *) ;;
+  esac
+  
++ # See below for excerpts from the Solaris FAQ.
++ 
++ # From roehrich@ironwood-fddi.cray.com Wed Sep 27 12:51:46 1995
++ # Date: Thu, 7 Sep 1995 16:31:40 -0500
++ # From: Dean Roehrich <roehrich@ironwood-fddi.cray.com>
++ # To: perl5-porters@africa.nicoh.com
++ # Subject: Re: On perl5/solaris/gcc
++ 
++ # Here's another draft of the perl5/solaris/gcc sanity-checker. 
++ 
+  case $PATH in
+! */usr/ucb*:/usr/bin:*|*/usr/ucb*:/usr/bin) cat <<END
+! 
+  NOTE:  Some people have reported problems with /usr/ucb/cc.  
+  Remove /usr/ucb from your PATH if you have difficulties.
++ 
++ END
++ ;;
++ esac
++ 
++ 
++ # Check that /dev/fd is mounted.  If it is not mounted, let the
++ # user know that suid scripts may not work.
++ /usr/bin/df /dev/fd 2>&1 > /dev/null
++ case $? in
++ 0) ;;
++ *)
++ 	cat <<END
++ 
++ NOTE: Your system does not have /dev/fd mounted.  If you want to
++ be able to use set-uid scripts you must ask your system administrator
++ to mount /dev/fd.
++ 
++ END
++ 	;;
++ esac
++ 
++ 
++ # See if libucb can be found in /usr/lib.  If it is, warn the user
++ # that this may cause problems while building Perl extensions.
++ /usr/bin/ls /usr/lib/libucb* >/dev/null 2>&1
++ case $? in
++ 0)
++ 	cat <<END
++ 
++ NOTE: libucb has been found in /usr/lib.  libucb should reside in
++ /usr/ucblib.  You may have trouble while building Perl extensions.
++ 
+  END
+  ;;
+  esac
++ 
++ 
++ # See if make(1) is GNU make(1).
++ # If it is, make sure the setgid bit is not set.
++ make -v > make.vers 2>&1
++ if grep GNU make.vers > /dev/null 2>&1; then
++     tmp=`/usr/bin/which make`
++     case "`/usr/bin/ls -l $tmp`" in
++     ??????s*)
++ 	    cat <<END
++ 	
++ NOTE: Your PATH points to GNU make, and your GNU make has the set-group-id
++ bit set.  You must either rearrange your PATH to put /usr/ccs/bin before the
++ GNU utilities or you must ask your system administrator to disable the
++ set-group-id bit on GNU make.
++ 
++ END
++ 	    ;;
++     esac
++ fi
++ rm -f make.vers
++ 
++ # If the C compiler is gcc:
++ #   - check the fixed-includes
++ #   - check as(1) and ld(1), they should not be GNU
++ # If the C compiler is not gcc:
++ #   - check as(1) and ld(1), they should not be GNU
++ #
++ # Watch out in case they have not set $cc.
++ case "`${cc:-cc} -v 2>&1`" in
++ *gcc*)
++ 	#
++ 	# Using gcc.
++ 	#
++ 	#echo Using gcc
++ 
++ 	# Get gcc to share its secrets.
++ 	echo 'main() { return 0; }' > try.c
++ 	verbose=`${cc:-cc} -v -o try try.c 2>&1`
++ 	tmp=`echo "$verbose" | grep '^Reading' |
++ 		awk '{print $NF}'  | sed 's/specs$/include/'`
++ 
++ 	# Determine if the fixed-includes look like they'll work.
++ 	sed 1q $tmp/stdarg.h 2>&1 | grep 'stdarg.h for GNU' 2>&1 >/dev/null
++ 	case $? in
++ 	0) ;;
++ 	*)
++ 		cat <<END
++ 
++ NOTE: The fixincludes or just-fixinc script for gcc was not run
++ properly.  Your gcc may not be able to compile Perl.  Inform your system
++ administrator that ${cc:-cc} is not properly installed.
++ 
++ END
++ 		;;
++ 	esac
++ 
++ 	# See if as(1) is GNU as(1).  GNU as(1) won't work for this job.
++ 	case $verbose in
++ 	*/usr/ccs/bin/as*) ;;
++ 	*)
++ 	    cat <<END
++ 
++ NOTE: You are using GNU as(1).  GNU as(1) will not build Perl.
++ You must arrange to use /usr/ccs/bin/as, perhaps by setting
++ GCC_EXEC_PREFIX.
++ 
++ END
++ 	;;
++ 	esac
++ 
++ 	# See if ld(1) is GNU ld(1).  GNU ld(1) won't work for this job.
++ 	case $verbose in
++ 	*/usr/ccs/bin/ld*) ;;
++ 	*)
++ 	    cat <<END
++ 
++ NOTE: You are using GNU ld(1).  GNU ld(1) will not build Perl.
++ You must arrange to use /usr/ccs/bin/ld, perhaps by setting
++ GCC_EXEC_PREFIX.
++ 
++ END
++ 	;;
++ 	esac
++ 
++ 	;; #using gcc
++ *)
++ 	#
++ 	# Not using gcc.
++ 	#
++ 	#echo Not using gcc
++ 
++ 	# See if as(1) is GNU as(1).  GNU as(1) won't work for this job.
++ 	case `as --version < /dev/null 2>&1` in
++ 	*GNU*)
++ 		cat <<END
++ 
++ NOTE: You are using GNU as(1).  GNU as(1) will not build Perl.
++ You must arrange to use /usr/ccs/bin, perhaps by adding it to the
++ beginning of your PATH.
++ 
++ END
++ 		;;
++ 	esac
++ 
++ 	# See if ld(1) is GNU ld(1).  GNU ld(1) won't work for this job.
++ 	case `ld --version < /dev/null 2>&1` in
++ 	*GNU*)
++ 		cat <<END
++ 
++ NOTE: You are using GNU ld(1).  GNU ld(1) will not build Perl.
++ You must arrange to use /usr/ccs/bin, perhaps by adding it to the
++ beginning of your PATH
++ 
++ END
++ 		;;
++ 	esac
++ 
++ 	;; #not using gcc
++ esac
++ 
++ # as --version or ld --version might dump core.
++ rm -f core
++ 
++ # This is just a trick to include some useful notes.
++ cat > /dev/null <<'End_of_Solaris_Notes'
++ 
++ Here are some notes kindly contributed by Dean Roehrich.
++ 
++ -----
++ Generic notes about building Perl5 on Solaris:
++ - Use /usr/ccs/bin/make.
++ - If you use GNU make, remove its setgid bit.
++ - Remove all instances of *ucb* from your path.
++ - Make sure libucb is not in /usr/lib (it should be in /usr/ucblib).
++ - Do not use GNU as or GNU ld, or any of GNU binutils or GNU libc.
++ - Do not use /usr/ucb/cc.
++ - Do not change Configure's default answers, except for the path names.
++ - Do not use -lmalloc.
++ - Do not build on SunOS 4 and expect it to work properly on SunOS 5.
++ - /dev/fd must be mounted if you want set-uid scripts to work.
++ 
++ 
++ Here are the gcc-related questions and answers from the Solaris 2 FAQ.  Note
++ the themes:
++ 	- run fixincludes
++ 	- run fixincludes correctly
++ 	- don't use GNU as or GNU ld
++ 
++ Question 5.7 covers the __builtin_va_alist problem people are always seeing.
++ Question 6.1.3 covers the GNU as and GNU ld issues which are always biting
++ people.
++ Question 6.9 is for those who are still trying to compile Perl4.
++ 
++ The latest Solaris 2 FAQ can be found in the following locations:
++ 	rtfm.mit.edu:/pub/usenet-by-group/comp.sys.sun.admin
++ 	ftp.fwi.uva.nl:/pub/solaris
++ 
++ Perl5 comes with a script in the top-level directory called "myconfig" which
++ will print a summary of the configuration in your config.sh.  My summary for
++ Solaris 2.4 and gcc 2.6.3 follows.  I have also built with gcc 2.7.0 and the
++ results are identical.  This configuration was generated with Configure's -d
++ option (take all defaults, don't bother prompting me).  All tests pass for
++ Perl5.001, patch.1m.
++ 
++ Summary of my perl5 (patchlevel 1) configuration:
++   Platform:
++     osname=solaris, osver=2.4, archname=sun4-solaris
++     uname='sunos poplar 5.4 generic_101945-27 sun4d sparc '
++     hint=recommended
++   Compiler:
++     cc='gcc', optimize='-O', ld='gcc'
++     cppflags=''
++     ccflags =''
++     ldflags =''
++     stdchar='unsigned char', d_stdstdio=define, usevfork=false
++     voidflags=15, castflags=0, d_casti32=define, d_castneg=define
++     intsize=4, alignbytes=8, usemymalloc=y, randbits=15
++   Libraries:
++     so=so
++     libpth=/lib /usr/lib /usr/ccs/lib /usr/local/lib
++     libs=-lsocket -lnsl -ldl -lm -lc -lcrypt
++     libc=/usr/lib/libc.so
++   Dynamic Linking:
++     dlsrc=dl_dlopen.xs, dlext=so, d_dlsymun=undef
++     cccdlflags='-fpic', ccdlflags=' ', lddlflags='-G'
++ 
++ 
++ Dean
++ roehrich@cray.com
++ 9/7/95
++ 
++ -----------
++ 
++ From: Casper.Dik@Holland.Sun.COM (Casper H.S. Dik - Network Security Engineer)
++ Subject: Solaris 2 Frequently Asked Questions (FAQ) 1.48
++ Date: 25 Jul 1995 12:20:18 GMT
++ 
++ 5.7) Why do I get __builtin_va_alist or __builtin_va_arg_incr undefined?
++ 
++     You're using gcc without properly installing the gcc fixed
++     include files.  Or you ran fixincludes after installing gcc
++     w/o moving the gcc supplied varargs.h and stdarg.h files
++     out of the way and moving them back again later.  This often
++     happens when people install gcc from a binary distribution.
++     If there's a tmp directory in gcc's include directory, fixincludes
++     didn't complete.  You should have run "just-fixinc" instead.
++ 
++     Another possible cause is using ``gcc -I/usr/include.''
++ 
++ 6.1) Where is the C compiler or where can I get one?
++ 
++     [...]
++ 
++     3) Gcc.
++ 
++     Gcc is available from the GNU archives in source and binary
++     form.  Look in a directory called sparc-sun-solaris2 for
++     binaries.  You need gcc 2.3.3 or later.  You should not use
++     GNU as or GNU ld.  Make sure you run just-fixinc if you use
++     a binary distribution.  Better is to get a binary version and
++     use that to bootstrap gcc from source.
++ 
++     [...]
++ 
++     When you install gcc, don't make the mistake of installing
++     GNU binutils or GNU libc, they are not as capable as their
++     counterparts you get with Solaris 2.x.
++ 
++ 6.9) I can't get perl 4.036 to compile or run.
++ 
++     Run Configure, and use the solaris_2_0 hints, *don't* use
++     the solaris_2_1 hints and don't use the config.sh you may
++     already have.  First you must make sure Configure and make
++     don't find /usr/ucb/cc.  (It must use gcc or the native C
++     compiler: /opt/SUNWspro/bin/cc)
++ 
++     Some questions need a special answer.
++ 
++     Are your system (especially dbm) libraries compiled with gcc? [y] y
++ 
++     yes: gcc 2.3.3 or later uses the standard calling
++     conventions, same as Sun's C.
++ 
++     Any additional cc flags? [ -traditional -Dvolatile=__volatile__
++     -I/usr/ucbinclude] -traditional -Dvolatile=__volatile__
++     Remove /usr/ucbinclude.
++ 
++     Any additional libraries? [-lsocket -lnsl -ldbm -lmalloc -lm
++     -lucb] -lsocket -lnsl  -lm
++ 
++     Don't include -ldbm, -lmalloc and -lucb.
++ 
++     Perl 5 compiled out of the box.
++ 
++ End_of_Solaris_Notes
+  
+Index: hints/unicos.sh
+*** perl5.001m/hints/unicos.sh	Wed Feb 22 14:37:07 1995
+--- perl5.001n/hints/unicos.sh	Tue Sep 12 11:51:26 1995
+***************
+*** 7,13 ****
+  d_setregid='undef'
+  d_setreuid='undef'
+  
+- # Pick up dbm.h in <rpcsvc/dbm.h>
+- if test -f /usr/include/rpcsvc/dbm.h; then
+-     ccflags="$ccflags -I/usr/include/rpcsvc"
+- fi
+--- 7,9 ----
+Index: hints/utekv.sh
+*** perl5.001m/hints/utekv.sh	Tue Oct 18 12:34:18 1994
+--- perl5.001n/hints/utekv.sh	Tue Sep 12 11:51:53 1995
+***************
+*** 6,14 ****
+  
+  usemymalloc='y'
+  
+- # /usr/include/rpcsvc is for finding dbm.h
+- inclwanted="$inclwanted /usr/include/rpcsvc"
+- 
+  echo " "
+  echo "NOTE: You may have to take out makefile dependencies on the files in"
+  echo "/usr/include (i.e. /usr/include/ctype.h) or the make will fail.  A"
+--- 6,11 ----
+Index: lib/ExtUtils/MakeMaker.pm
+Prereq:  1.21 
+*** perl5.001m/lib/ExtUtils/MakeMaker.pm	Wed Jun 21 12:09:55 1995
+--- perl5.001n/lib/ExtUtils/MakeMaker.pm	Wed Jul 12 10:19:24 1995
+***************
+*** 426,432 ****
+      die "Your Makefile was built with ExtUtils::MakeMaker v $checkversion.
+  Current Version is $Version. There have been considerable changes in the meantime.
+  Please rerun 'perl Makefile.PL' to regenerate the Makefile.\n" if $checkversion < $Version_OK;
+!     print STDOUT "Makefile built with ExtUtils::MakeMaker v $checkversion. Current Version is $Version." unless $checkversion == $Version;
+  }
+  
+  sub mksymlists{
+--- 426,432 ----
+      die "Your Makefile was built with ExtUtils::MakeMaker v $checkversion.
+  Current Version is $Version. There have been considerable changes in the meantime.
+  Please rerun 'perl Makefile.PL' to regenerate the Makefile.\n" if $checkversion < $Version_OK;
+!     print STDOUT "Makefile built with ExtUtils::MakeMaker v $checkversion. Current Version is $Version.\n" unless $checkversion == $Version;
+  }
+  
+  sub mksymlists{
+Index: makedepend.SH
+*** perl5.001m/makedepend.SH	Thu May 25 11:05:52 1995
+--- perl5.001n/makedepend.SH	Wed Aug 30 22:55:44 1995
+***************
+*** 45,51 ****
+  
+  # We need .. when we are in the x2p directory if we are using the
+  # cppstdin wrapper script.
+! PATH="$PATH:.:.."
+  export PATH
+  
+  $cat /dev/null >.deptmp
+--- 45,53 ----
+  
+  # We need .. when we are in the x2p directory if we are using the
+  # cppstdin wrapper script.
+! # Put .. and . first so that we pick up the present cppstdin, not
+! # an older one lying about in /usr/local/bin.
+! PATH=".:..:$PATH"
+  export PATH
+  
+  $cat /dev/null >.deptmp
+Index: pp_sys.c
+*** perl5.001m/pp_sys.c	Thu May 25 17:06:55 1995
+--- perl5.001n/pp_sys.c	Wed Sep 20 09:29:45 1995
+***************
+*** 1455,1463 ****
+  
+  PP(pp_accept)
+  {
+-     struct sockaddr_in saddr;	/* use a struct to avoid alignment problems */
+      dSP; dTARGET;
+  #ifdef HAS_SOCKET
+      GV *ngv;
+      GV *ggv;
+      register IO *nstio;
+--- 1455,1463 ----
+  
+  PP(pp_accept)
+  {
+      dSP; dTARGET;
+  #ifdef HAS_SOCKET
++     struct sockaddr_in saddr;	/* use a struct to avoid alignment problems */
+      GV *ngv;
+      GV *ggv;
+      register IO *nstio;
+Index: t/README
+*** perl5.001m/t/README	Tue Oct 18 12:42:25 1994
+--- perl5.001n/t/README	Fri Jul 28 10:23:35 1995
+***************
+*** 8,16 ****
+  have to worry about removing the extra print statements later since TEST
+  ignores lines beginning with '#'.
+  
+- Several tests assume you have sucessfully included the POSIX
+- extension.  If you have not, lib/[nos]dbm.t will fail.  Try replacing
+- the O_CREAT|O_RDWR with either 0x202 or 0x102 in the tie statements
+- and run the tests again.
+- 
+  If you come up with new tests, send them to lwall@netlabs.com.
+--- 8,11 ----
+Index: x2p/a2p.h
+*** perl5.001m/x2p/a2p.h	Mon Feb 13 20:16:09 1995
+--- perl5.001n/x2p/a2p.h	Wed Sep 27 14:58:21 1995
+***************
+*** 8,13 ****
+--- 8,14 ----
+   * $Log:	a2p.h,v $
+   */
+  
++ #include "../embed.h"
+  #define VOIDUSED 1
+  #include "../config.h"
+  
+
+
+End of patch.
+
+
+

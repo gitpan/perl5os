@@ -1,0 +1,570 @@
+From daled@cadence.com  Tue Jul 11 11:52:47 1995
+Received: from mailgate.Cadence.COM (mailgate.Cadence.COM [158.140.2.1]) by mathserv.mps.ohio-state.edu (8.7.Beta.7/8.7.Beta.7) with SMTP id LAA04137 for <ilya@math.ohio-state.edu>; Tue, 11 Jul 1995 11:52:39 -0400 (EDT)
+Received: (from smap@localhost) by mailgate.Cadence.COM (8.6.8/8.6.8) id IAA19296 for <ilya@math.ohio-state.edu>; Tue, 11 Jul 1995 08:38:27 -0700
+Received: from cds9172.cadence.com(158.140.48.134) by mailgate.cadence.com via smap (V1.0mjr)
+	id sma018385; Tue Jul 11 08:35:37 1995
+Received: (from daled@localhost) by cds9172.cadence.com (8.6.8/8.6.8) id IAA03010; Tue, 11 Jul 1995 08:35:28 -0700
+Date: Tue, 11 Jul 1995 08:35:28 -0700
+From: Dale DePriest <daled@cadence.com>
+Message-Id: <199507111535.IAA03010@cds9172.cadence.com>
+To: Ilya Zakharevich <ilya@math.ohio-state.edu>
+Subject: Re: Os/2 pdksh
+References: <199507110002.RAA00939@cds9172.cadence.com>
+	<199507110113.VAA27060@monk.mps.ohio-state.edu>
+Status: ROr
+
+Hi Ilya,
+
+Yes I meant alias echo='print -F'
+this will prevent the inadvertant expansion.
+
+At the bottom of this file I have included the patches I sent to Michael
+Rendell toward a update to pdksh5.2.3.  You can get the sources from
+ftp.cs.mun.ca and add these patches to fix the \ problem.
+
+I didn't fully understand your next comment.
+
+  It is OK, but here is another suggestion: the current action on
+  "executable" file without extension and #! is to run it directly. This is
+  good, but I know no way to produce runnable file like that
+  unintensionally. What about running the command specified in
+  $NOHASHBANG (if set)? One reasonable value is sh, another one may be
+  to emxbind the file if it is a.out-style.
+
+I took the executable file without an extension approach to permit running
+scripts that automatically generate and run other scripts.  I also found
+some configure programs that generate executables and run them.  You
+are right in that you cannot build an os2 executable without the .exe extension
+but after it is built you can easily change it.  I found that this is
+the easiest change to make to many configure scripts since they invariably
+have many test commands in them to check for the existance of a file
+without an extension.
+
+How would you propose the $NOHASHBANG be used and when would it know to
+go and use cmd.exe for scripts?  It is easy to play with the extension
+rules once you get the sources, check it out.
+
+    _      _     Dale DePriest  		San Jose, California
+   /`) _  //     daled@Cadence.COM		voice: (408) 428-5249
+ o/_/ (_(_X_(`	 				fax: (408) 943-0402
+
+Note that the emacs change is unrelated to the \ problem and is an
+enhancement that Michael may choose to ignore plus a bug fix on
+command completion.  The exec.c fix is for the cmd.exe vs CMD.EXE problem.
+
+
+diff -crb pdksh-5.2.3/emacs.c myksh-5.2.3/emacs.c
+*** pdksh-5.2.3/emacs.c	Fri May 19 18:20:26 1995
+--- myksh-5.2.3/emacs.c	Mon Jun 19 14:19:59 1995
+***************
+*** 47,54 ****
+  #define	XF_NOBIND	2	/* not allowed to bind to function */
+  #define	XF_PREFIX	4	/* function sets prefix */
+  
+! #define	iscfs(c)	(c == ' ' || c == '\t')	/* Separator for completion */
+! #define	ismfs(c)	(!(isalnum(c) || c == '_' || c == '$'))  /* Separator for motion */
+  
+  #ifdef OS2
+    /* Deal with 8 bit chars & an extra prefix for function key (these two
+--- 47,56 ----
+  #define	XF_NOBIND	2	/* not allowed to bind to function */
+  #define	XF_PREFIX	4	/* function sets prefix */
+  
+!                      /* Separator for completion */
+! #define	iscfs(c)        (c==' '||c=='\t'||c=='\"'||c=='\''||c=='=')
+!                      /* Separator for motion */
+! #define	ismfs(c)	(!(isalnum(c) || c == '_' || c == '$'))  
+  
+  #ifdef OS2
+    /* Deal with 8 bit chars & an extra prefix for function key (these two
+***************
+*** 1642,1648 ****
+  		(void)strcat(buf, name);
+  		if (stat(buf, &statb)==0)
+  			if (S_ISDIR(statb.st_mode))
+! 				type = DIRSEP;
+  			else if (S_ISREG(statb.st_mode) && access(buf, X_OK)==0)
+  				type = '*';
+  		if (type)
+--- 1644,1650 ----
+  		(void)strcat(buf, name);
+  		if (stat(buf, &statb)==0)
+  			if (S_ISDIR(statb.st_mode))
+! 				type = '/';
+  			else if (S_ISREG(statb.st_mode) && access(buf, X_OK)==0)
+  				type = '*';
+  		if (type)
+***************
+*** 1833,1840 ****
+  	if (dirnam[0] && dirnam[1] == ':' && dirnam[2] == '\0' ) {
+  	    char buf[4];
+  	    strcpy(buf, dirnam);
+! 	    strcat(buf, DIRSEPSTR);
+! 	    dirp = ksh_opendir(dirnam);
+  	} else
+  #endif /* OS2 */
+  		dirp = ksh_opendir(dirnam);
+--- 1835,1842 ----
+  	if (dirnam[0] && dirnam[1] == ':' && dirnam[2] == '\0' ) {
+  	    char buf[4];
+  	    strcpy(buf, dirnam);
+! 	    strcat(buf, "/");
+! 	    dirp = ksh_opendir(buf);
+  	} else
+  #endif /* OS2 */
+  		dirp = ksh_opendir(dirnam);
+Common subdirectories: pdksh-5.2.3/etc and myksh-5.2.3/etc
+diff -crb pdksh-5.2.3/eval.c myksh-5.2.3/eval.c
+*** pdksh-5.2.3/eval.c	Thu Jun 15 06:38:00 1995
+--- myksh-5.2.3/eval.c	Sat Jun 17 17:10:42 1995
+***************
+*** 996,1002 ****
+  #endif /* S_ISLNK */
+  				    ))
+  			{
+! 				*xp++ = DIRSEP;
+  				*xp = '\0';
+  			}
+  		}
+--- 996,1002 ----
+  #endif /* S_ISLNK */
+  				    ))
+  			{
+! 				*xp++ = '/';
+  				*xp = '\0';
+  			}
+  		}
+***************
+*** 1005,1011 ****
+  	}
+  
+  	if (xp > Xstring(*xs, xp))
+! 		*xp++ = DIRSEP;
+  	while (ISDIRSEP(*sp)) {
+  		Xcheck(*xs, xp);
+  		*xp++ = *sp++;
+--- 1005,1011 ----
+  	}
+  
+  	if (xp > Xstring(*xs, xp))
+! 		*xp++ = '/';
+  	while (ISDIRSEP(*sp)) {
+  		Xcheck(*xs, xp);
+  		*xp++ = *sp++;
+diff -crb pdksh-5.2.3/exec.c myksh-5.2.3/exec.c
+*** pdksh-5.2.3/exec.c	Thu Jun 15 09:53:41 1995
+--- myksh-5.2.3/exec.c	Mon Jun 19 14:15:19 1995
+***************
+*** 1019,1025 ****
+  		if (mode == X_OK) {
+  			for (i = 0; xsuffixes[i]; i++)
+  				if (xsuffixes[i][1]
+! 				    && strcmp(p, xsuffixes[i]) == 0)
+  				{
+  					mode = R_OK;
+  					break;
+--- 1019,1025 ----
+  		if (mode == X_OK) {
+  			for (i = 0; xsuffixes[i]; i++)
+  				if (xsuffixes[i][1]
+! 				    && FILECMP(p, xsuffixes[i]) == 0)
+  				{
+  					mode = R_OK;
+  					break;
+Common subdirectories: pdksh-5.2.3/misc and myksh-5.2.3/misc
+Common subdirectories: pdksh-5.2.3/os2 and myksh-5.2.3/os2
+Only in myksh-5.2.3: os2.c
+diff -crb pdksh-5.2.3/path.c myksh-5.2.3/path.c
+*** pdksh-5.2.3/path.c	Tue May  2 11:35:14 1995
+--- myksh-5.2.3/path.c	Sat Jun 17 17:10:20 1995
+***************
+*** 114,120 ****
+  			memcpy(xp, cwd, len);
+  			xp += len;
+  			if (!ISDIRSEP(cwd[len - 1]))
+! 				Xput(*xsp, xp, DIRSEP);
+  		}
+  		*phys_pathp = Xlength(*xsp, xp);
+  		if (use_cdpath && plen) {
+--- 114,120 ----
+  			memcpy(xp, cwd, len);
+  			xp += len;
+  			if (!ISDIRSEP(cwd[len - 1]))
+! 				Xput(*xsp, xp, '/');
+  		}
+  		*phys_pathp = Xlength(*xsp, xp);
+  		if (use_cdpath && plen) {
+***************
+*** 122,128 ****
+  			memcpy(xp, plist, plen);
+  			xp += plen;
+  			if (!ISDIRSEP(plist[plen - 1]))
+! 				Xput(*xsp, xp, DIRSEP);
+  			rval = 1;
+  		}
+  	}
+--- 122,128 ----
+  			memcpy(xp, plist, plen);
+  			xp += plen;
+  			if (!ISDIRSEP(plist[plen - 1]))
+! 				Xput(*xsp, xp, '/');
+  			rval = 1;
+  		}
+  	}
+***************
+*** 196,202 ****
+  			} else if (t[1] == '.' && (!t[2] || ISDIRSEP(t[2]))) {
+  				if (!isrooted && cur == start) {
+  					if (cur != very_start)
+! 						*cur++ = DIRSEP;
+  					*cur++ = '.';
+  					*cur++ = '.';
+  					start = cur;
+--- 196,202 ----
+  			} else if (t[1] == '.' && (!t[2] || ISDIRSEP(t[2]))) {
+  				if (!isrooted && cur == start) {
+  					if (cur != very_start)
+! 						*cur++ = '/';
+  					*cur++ = '.';
+  					*cur++ = '.';
+  					start = cur;
+***************
+*** 209,215 ****
+  		}
+  
+  		if (cur != very_start)
+! 			*cur++ = DIRSEP;
+  
+  		/* find/copy next component of pathname */
+  		while (*t && !ISDIRSEP(*t))
+--- 209,215 ----
+  		}
+  
+  		if (cur != very_start)
+! 			*cur++ = '/';
+  
+  		/* find/copy next component of pathname */
+  		while (*t && !ISDIRSEP(*t))
+***************
+*** 253,259 ****
+  		return (char *) 0;
+  
+  	if (Xlength(xs, xp) == 0)
+! 		Xput(xs, xp, DIRSEP);
+  	Xput(xs, xp, '\0');
+  
+  	return Xclose(xs, xp);
+--- 253,259 ----
+  		return (char *) 0;
+  
+  	if (Xlength(xs, xp) == 0)
+! 		Xput(xs, xp, '/');
+  	Xput(xs, xp, '\0');
+  
+  	return Xclose(xs, xp);
+***************
+*** 289,295 ****
+  		}
+  
+  		savepos = Xsavepos(*xsp, xp);
+! 		Xput(*xsp, xp, DIRSEP);
+  		XcheckN(*xsp, xp, len + 1);
+  		memcpy(xp, p, len);
+  		xp += len;
+--- 289,295 ----
+  		}
+  
+  		savepos = Xsavepos(*xsp, xp);
+! 		Xput(*xsp, xp, '/');
+  		XcheckN(*xsp, xp, len + 1);
+  		memcpy(xp, p, len);
+  		xp += len;
+Only in pdksh-5.2.3: pdksh
+diff -crb pdksh-5.2.3/sh.h myksh-5.2.3/sh.h
+*** pdksh-5.2.3/sh.h	Tue Jun 13 11:31:31 1995
+--- myksh-5.2.3/sh.h	Thu Jun 15 22:05:44 1995
+***************
+*** 280,286 ****
+  # define ISABSPATH(s)	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])))
+  # define ISROOTEDPATH(s) (ISDIRSEP((s)[0]) || ISABSPATH(s))
+  # define ISRELPATH(s)	(!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
+! # define FILECHCONV(c)	(isupper(c) ? tolower(c) : c)
+  # define FILECMP(s1, s2) stricmp(s1, s2)
+  # define FILENCMP(s1, s2, n) strnicmp(s1, s2, n)
+  extern char *strchr_dirsep(char *path);
+--- 280,286 ----
+  # define ISABSPATH(s)	(((s)[0] && (s)[1] == ':' && ISDIRSEP((s)[2])))
+  # define ISROOTEDPATH(s) (ISDIRSEP((s)[0]) || ISABSPATH(s))
+  # define ISRELPATH(s)	(!(s)[0] || ((s)[1] != ':' && !ISDIRSEP((s)[0])))
+! # define FILECHCONV(c)	(isascii(c) && isupper(c) ? tolower(c) : c)
+  # define FILECMP(s1, s2) stricmp(s1, s2)
+  # define FILENCMP(s1, s2, n) strnicmp(s1, s2, n)
+  extern char *strchr_dirsep(char *path);
+Only in pdksh-5.2.3: stamp-h
+diff -crb pdksh-5.2.3/vi.c myksh-5.2.3/vi.c
+*** pdksh-5.2.3/vi.c	Fri May 19 15:09:30 1995
+--- myksh-5.2.3/vi.c	Mon Jun 19 14:14:34 1995
+***************
+*** 619,624 ****
+--- 619,628 ----
+  			complete_word(0);
+  			break;
+  		}
++ 
++         case Ctrl('a'):
++ 	        vi_cmd(1,"A");
++ 		break;
+  		/* FALLTHROUGH */
+  	/* End nonstandard vi commands } */
+  
+diff -crb pdksh-5.2.3/os2/README.os2 myksh-5.2.3/os2/README.os2
+*** pdksh-5.2.3/os2/README.os2	Tue May 16 07:34:33 1995
+--- myksh-5.2.3/os2/README.os2	Mon Jun 19 15:10:27 1995
+***************
+*** 1,6 ****
+  	OS/2 port of pdksh version 5
+! 	May 8, 1995
+  
+  This document is intended to define the specific features and
+  differences in the os/2 port of pdksh.  For general features and
+  descriptions of pdksh itself please refer to the standard pdksh readme
+--- 1,8 ----
+  	OS/2 port of pdksh version 5
+! 	June 19, 1995
+  
++ Introduction
++ 
+  This document is intended to define the specific features and
+  differences in the os/2 port of pdksh.  For general features and
+  descriptions of pdksh itself please refer to the standard pdksh readme
+***************
+*** 11,21 ****
+  run time package.  This version was built using the emx facility and
+  therefore requires that an emx run time package 0.9a or later be
+  installed on the system.  This is not normally a problem since you
+! probably already installed it for 'ls' and other unix commands.
+  
+  If you would rather build your own, obtain the sources from
+  ftp.cs.mun.ca in the directory pub/pdksh.  You will need a copy of gtar
+! and gunzip to unload the archive and install on an hpfs partition. Now cd
+  to the source directory and run the script os2\configure.cmd. (If you
+  prefer you can copy configure.cmd to the source directory.)  This will
+  prepare the build environment so that your version of make can be used
+--- 13,26 ----
+  run time package.  This version was built using the emx facility and
+  therefore requires that an emx run time package 0.9a or later be
+  installed on the system.  This is not normally a problem since you
+! probably already installed it for 'ls' and other Unix commands from
+! the file gnufutil.zip.
+  
++ Building KSH.EXE
++ 
+  If you would rather build your own, obtain the sources from
+  ftp.cs.mun.ca in the directory pub/pdksh.  You will need a copy of gtar
+! and gunzip to unload the archive and install on an hpfs partition. Change
+  to the source directory and run the script os2\configure.cmd. (If you
+  prefer you can copy configure.cmd to the source directory.)  This will
+  prepare the build environment so that your version of make can be used
+***************
+*** 25,32 ****
+  will be placed into the source directory. In addition you may want to
+  make changes to options.h to define your particular preferences.
+  Configure.cmd for os2 does support two options. Use /v for verbose output 
+! and /d to build a debug version with symbols (for gcc).
+  
+  KSH 5 versus KSH 4.9
+  
+  The KSH version 5 effort is being spearheaded by Michael Rendell, who
+--- 30,45 ----
+  will be placed into the source directory. In addition you may want to
+  make changes to options.h to define your particular preferences.
+  Configure.cmd for os2 does support two options. Use /v for verbose output 
+! and /d to build a debug version with symbols (for gcc).  You should
+! always get a copy of the latest pre-built version as well since the
+! file os2bugs may contain some last minute fixes that were too late
+! to include in the formal release and you may find some other updates.
+  
++ At this point you can use your favorite make command to build the
++ executable. It is known to work with nmake and dmake, gnu make requires at
++ least version 3.7.3 and, unless you change the Makefile, it needs a
++ file /bin/sh on the same drive (use the pre-built one).
++ 
+  KSH 5 versus KSH 4.9
+  
+  The KSH version 5 effort is being spearheaded by Michael Rendell, who
+***************
+*** 52,58 ****
+  standard out so it can be redirected or piped.  Arrays are now
+  implemented as are almost all AT&T ksh features plus a few more.  The
+  os/2 port provides file name completion that is not case sensitive.
+! The startup file kshrc.ksh is still supported but the way it works
+  is slightly different.
+  
+  OS2 implementation vs. Unix
+--- 65,71 ----
+  standard out so it can be redirected or piped.  Arrays are now
+  implemented as are almost all AT&T ksh features plus a few more.  The
+  os/2 port provides file name completion that is not case sensitive.
+! The startup file kshrc.ksh is still supported, but the way it works
+  is slightly different.
+  
+  OS2 implementation vs. Unix
+***************
+*** 68,76 ****
+  Replace the ^ alpha you see with ^0 in the bind command.)  The
+  cursor keys have been implemented for command history for both emacs
+  mode and vi insert mode.  Standard default stty settings are implemented
+! for both modes as well.  (This causes some strange behavior when an
+! edit mode is not set so I recommend that you always set either emacs
+! or vi mode.)
+  
+  The remapping of keys can lead to some confusion for Unix and OS/2
+  users.  The '\' key has a different meaning in Unix where it is used
+--- 81,87 ----
+  Replace the ^ alpha you see with ^0 in the bind command.)  The
+  cursor keys have been implemented for command history for both emacs
+  mode and vi insert mode.  Standard default stty settings are implemented
+! for both modes as well.
+  
+  The remapping of keys can lead to some confusion for Unix and OS/2
+  users.  The '\' key has a different meaning in Unix where it is used
+***************
+*** 86,93 ****
+  example, interpret \t as a tab when printing.  This can be
+  disconcerting when you echo the variable that you just set to c:\tmp.
+  If you want to use echo on a variable with pathnames in it you should
+! either use uppercase names or a '/' as a separator. If you have loaded
+! the printenv command it can be used to look at variables.
+  
+  Unix uses '/' as a directory separator and the OS/2 implementation
+  permits and in some cases prefers this use as well.  Generally you
+--- 97,105 ----
+  example, interpret \t as a tab when printing.  This can be
+  disconcerting when you echo the variable that you just set to c:\tmp.
+  If you want to use echo on a variable with pathnames in it you should
+! either use uppercase names or a '/' as a separator. Another choice is
+! to alias echo to 'print -r'.  This will disable the special interpretaions.
+! If you have loaded the printenv command it can be used to look at variables.
+  
+  Unix uses '/' as a directory separator and the OS/2 implementation
+  permits and in some cases prefers this use as well.  Generally you
+***************
+*** 148,161 ****
+  shell will also automatically use a startup shell kshrc.ksh if it
+  finds one in your home directory and is started interactively (and $ENV
+  is not set).  The variable OS2_SHELL should point to cmd.exe or a fully
+! compatible version.  This is used to run native os2 scripts.
+  
+! A new feature with this release is the support of the -l, login option.
+  This shell will honor a loginfile called profile.ksh if located in
+  $INIT/etc, c:/usr/etc, or your home. If you are using this shell
+  as your primary shell you may wish to change the settings in your
+  os2 command shell notebook to call ksh.exe -l.  I would not recommend
+! changing the default shell in config.sys.
+  
+  Should you mess up your PATH variable try 'unset PATH'.  A default
+  path may get you going again.  In addition pdksh for OS/2 always uses
+--- 160,174 ----
+  shell will also automatically use a startup shell kshrc.ksh if it
+  finds one in your home directory and is started interactively (and $ENV
+  is not set).  The variable OS2_SHELL should point to cmd.exe or a fully
+! compatible version.
+  
+! A new feature is the support of the -l, login option.
+  This shell will honor a loginfile called profile.ksh if located in
+  $INIT/etc, c:/usr/etc, or your home. If you are using this shell
+  as your primary shell you may wish to change the settings in your
+  os2 command shell notebook to call ksh.exe -l.  I would not recommend
+! changing the default shell in config.sys. Please check the file README.1st 
+! that comes in the run time zip file for installation information on ksh.
+  
+  Should you mess up your PATH variable try 'unset PATH'.  A default
+  path may get you going again.  In addition pdksh for OS/2 always uses
+***************
+*** 162,168 ****
+  commands from current context first in the search path even if it is
+  not explicitly set.  By default c: drive is used when no variables
+  are set.  Specifically c:/usr/bin and c:/usr/etc can be used as defaults
+! variouse places in ksh.
+  
+  The shell itself can be called any name you wish.  Good names include
+  pdksh.exe, ksh.exe, sh.exe.  You can build two completely different
+--- 175,181 ----
+  commands from current context first in the search path even if it is
+  not explicitly set.  By default c: drive is used when no variables
+  are set.  Specifically c:/usr/bin and c:/usr/etc can be used as defaults
+! various places in ksh.
+  
+  The shell itself can be called any name you wish.  Good names include
+  pdksh.exe, ksh.exe, sh.exe.  You can build two completely different
+***************
+*** 181,187 ****
+  without an extension as an executable in the style of unix.  Hopefully
+  this won't cause problems since it really aids scripts.  If it does we 
+  may have to take it out. Scripts need not necessarily be a ksh shell
+! scripts however.  the standard Unix #! line at the top of the file
+  determines the actual comand that will be used to run the
+  script. A new feature in this release is that any unix absolute
+  pathnames will be stripped from the #! line since they are unlikely
+--- 194,200 ----
+  without an extension as an executable in the style of unix.  Hopefully
+  this won't cause problems since it really aids scripts.  If it does we 
+  may have to take it out. Scripts need not necessarily be a ksh shell
+! scripts however.  The standard Unix #! line at the top of the file
+  determines the actual comand that will be used to run the
+  script. A new feature in this release is that any unix absolute
+  pathnames will be stripped from the #! line since they are unlikely
+***************
+*** 289,307 ****
+  conftest.$ac_ext $LIBS && mv conftest.exe conftest'
+  
+  This trick takes advantage of ksh's ability to run a command without an
+! extension.  Even with these changes you may still find
+! that configure does not correctly identify some os2 features.  I would
+! recommend that the config.cache file be edited as requred.  The config.cache
+! file used to build ksh for os2 is located in the os2 subdirectory and
+! can be used as a reference.
+  
+  WORK IN PROGRESS
+  
+! There is still much to do to complete this project.  The confiure.cmd
+  file needs work as does the Makefile.  The standard defaults work in
+! the Makefile but many other things have not been checked.  It is known
+! to work with nmake and dmake, gnu make requires at least version 3.7.3.
+! And of course there are bugs to fix and enhancements to be made.
+  
+  Please let me know if you like this port, have found a porting bug,
+  have fixed a bug, or have coded a spiffy enhancement.  Michael Rendell
+--- 302,319 ----
+  conftest.$ac_ext $LIBS && mv conftest.exe conftest'
+  
+  This trick takes advantage of ksh's ability to run a command without an
+! extension.  Even with these changes you may still find that configure does
+! not correctly identify some os2 features.  I would recommend that the
+! config.cache file be edited as requred.  The config.cache file used to
+! build ksh for os2 is located in the os2 subdirectory and can be used as a
+! reference.
+  
+  WORK IN PROGRESS
+  
+! There is still much to do to complete this project.  The configure.cmd 
+  file needs work as does the Makefile.  The standard defaults work in 
+! the Makefile but many other things have not been checked.  And of course 
+! there are bugs to fix and enhancements to be made.
+  
+  Please let me know if you like this port, have found a porting bug,
+  have fixed a bug, or have coded a spiffy enhancement.  Michael Rendell
+***************
+*** 309,315 ****
+--- 321,329 ----
+  maintaining and enhancing all of the code.  Please check the standard
+  README for more information and also the file os2bugs for current known
+  problems and limitations.  I can be reached at daled@cadence.com.
++ 
+  Note that this is a home brew project and is in no way related to my
+  employment.
+  
+  	Dale DePriest
++ 
+
+

@@ -1,0 +1,301 @@
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/AutoSplit.pm ./lib/AutoSplit.pm
+*** ../perl5os2.patch/perl5.001m.andy/lib/AutoSplit.pm	Thu May 25 11:55:46 1995
+--- ./lib/AutoSplit.pm	Thu Sep 28 00:00:20 1995
+***************
+*** 56,61 ****
+--- 56,62 ----
+  
+      foreach(@modules){
+  	s#::#/#g;	# incase specified as ABC::XYZ
++ 	s|\\|/|g;		# bug in ksh OS/2
+  	s#^lib/##; # incase specified as lib/*.pm
+  	if ($vms && /[:>\]]/) { # may need to convert VMS-style filespecs
+  	    my ($dir,$name) = (/(.*])(.*)/);
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/Cwd.pm ./lib/Cwd.pm
+*** ../perl5os2.patch/perl5.001m.andy/lib/Cwd.pm	Thu May 25 08:16:34 1995
+--- ./lib/Cwd.pm	Thu Sep 28 00:00:22 1995
+***************
+*** 53,58 ****
+--- 53,65 ----
+  sub getcwd
+  {
+      if($Config{'osname'} eq 'VMS') { return $ENV{'PWD'} = $ENV{'DEFAULT'} }
++     # inodes broken under OS/2
++     if($Config{'osname'} =~ m|^os/?2$|i) {
++       $ENV{'PWD'} = `cmd /c cd`;
++       chop $ENV{'PWD'};
++       $ENV{'PWD'} =~ s:\\:/:g ;
++       return $ENV{'PWD'};
++     }
+  
+      my($dotdots, $cwd, @pst, @cst, $dir, @tst);
+  
+***************
+*** 121,126 ****
+--- 128,140 ----
+  
+  sub fastcwd {
+      if($Config{'osname'} eq 'VMS') { return $ENV{'DEFAULT'} }
++     # inodes broken under OS/2
++     if($Config{'osname'} =~ m|^os/?2$|i) {
++       $ENV{'PWD'} = `cmd /c cd`;
++       chop $ENV{'PWD'};
++       $ENV{'PWD'} =~ s:\\:/:g ;
++       return $ENV{'PWD'};
++     }
+  
+      my($odev, $oino, $cdev, $cino, $tdev, $tino);
+      my(@path, $path);
+***************
+*** 136,145 ****
+  	opendir(DIR, '.');
+  	for (;;) {
+  	    $direntry = readdir(DIR);
+  	    next if $direntry eq '.';
+  	    next if $direntry eq '..';
+  
+- 	    last unless defined $direntry;
+  	    ($tdev, $tino) = lstat($direntry);
+  	    last unless $tdev != $odev || $tino != $oino;
+  	}
+--- 150,161 ----
+  	opendir(DIR, '.');
+  	for (;;) {
+  	    $direntry = readdir(DIR);
++ 
++ 	    last unless defined $direntry;
++ 
+  	    next if $direntry eq '.';
+  	    next if $direntry eq '..';
+  
+  	    ($tdev, $tino) = lstat($direntry);
+  	    last unless $tdev != $odev || $tino != $oino;
+  	}
+***************
+*** 164,169 ****
+--- 180,189 ----
+  $chdir_init = 0;
+  
+  sub chdir_init{
++     $chdir_init = 1;
++     if($Config{'osname'} =~ m|^os/?2$|i) {
++       return fastpwd;
++     }
+      if ($ENV{'PWD'}) {
+  	my($dd,$di) = stat('.');
+  	my($pd,$pi) = stat($ENV{'PWD'});
+***************
+*** 181,187 ****
+  	    $ENV{'PWD'}="$2$3";
+  	}
+      }
+-     $chdir_init = 1;
+  }
+  
+  sub chdir {
+--- 201,206 ----
+***************
+*** 190,195 ****
+--- 209,217 ----
+      chdir_init() unless $chdir_init;
+      return 0 unless (CORE::chdir $newdir);
+      if ($Config{'osname'} eq 'VMS') { return $ENV{PWD} = $ENV{DEFAULT} }
++     if($Config{'osname'} =~ m|^os/?2$|i) {
++       return fastpwd;
++     }
+  
+      if ($newdir =~ m#^/#) {
+  	$ENV{'PWD'} = $newdir;
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/File/Find.pm ./lib/File/Find.pm
+*** ../perl5os2.patch/perl5.001m.andy/lib/File/Find.pm	Thu May 25 08:28:40 1995
+--- ./lib/File/Find.pm	Thu Sep 28 00:00:26 1995
+***************
+*** 63,68 ****
+--- 63,70 ----
+  @ISA = qw(Exporter);
+  @EXPORT = qw(find finddepth $name $dir);
+  
++ $dont_use_nlink = 1 if $Config{osname} =~ m:^os/?2$:i ;
++ 
+  # Usage:
+  #	use File::Find;
+  #
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/perl5db.pl ./lib/perl5db.pl
+*** ../perl5os2.patch/perl5.001m.andy/lib/perl5db.pl	Sun Mar 12 19:34:52 1995
+--- ./lib/perl5db.pl	Thu Sep 28 00:00:26 1995
+***************
+*** 4,10 ****
+  # Ray Lischner (uunet!mntgfx!lisch) as of 5 Nov 1990
+  # Johan Vromans -- upgrade to 4.0 pl 10
+  
+! $header = '$RCSfile: perl5db.pl,v $$Revision: 4.1 $$Date: 92/08/07 18:24:07 $';
+  #
+  # This file is automatically included if you do perl -d.
+  # It's probably not useful to include this yourself.
+--- 4,10 ----
+  # Ray Lischner (uunet!mntgfx!lisch) as of 5 Nov 1990
+  # Johan Vromans -- upgrade to 4.0 pl 10
+  
+! $header = '$RCSfile: perl5db.pl,v $$Revision: 4.1 $$Date: 92/08/07 18:24:07 $ ';
+  #
+  # This file is automatically included if you do perl -d.
+  # It's probably not useful to include this yourself.
+***************
+*** 15,20 ****
+--- 15,26 ----
+  #
+  # $Log:	perldb.pl,v $
+  
++ # Is Perl being run from Emacs?
++ $emacs = ((defined $main::ARGV[0]) and ($main::ARGV[0] eq '-emacs'));
++ shift(@main::ARGV) if $emacs;
++ 
++ #require Term::ReadLine;
++ 
+  local($^W) = 0;
+  
+  if (-e "/dev/tty") {
+***************
+*** 30,47 ****
+      $rcfile="perldb.ini";
+  }
+  
+! open(IN, "<$console") || open(IN,  "<&STDIN");	# so we don't dingle stdin
+  open(OUT,">$console") || open(OUT, ">&STDERR")
+!     || open(OUT, ">&STDOUT");	# so we don't dongle stdout
+  select(OUT);
+  $| = 1;				# for DB::OUT
+  select(STDOUT);
+  $| = 1;				# for real STDOUT
+  $sub = '';
+- 
+- # Is Perl being run from Emacs?
+- $emacs = $main::ARGV[0] eq '-emacs';
+- shift(@main::ARGV) if $emacs;
+  
+  $header =~ s/.Header: ([^,]+),v(\s+\S+\s+\S+).*$/$1$2/;
+  print OUT "\nLoading DB routines from $header\n";
+--- 36,62 ----
+      $rcfile="perldb.ini";
+  }
+  
+! # Around a bug:
+! if (defined $ENV{'OS2_SHELL'}) { # In OS/2
+!   if ($DB::emacs) {
+!     $console = undef;
+!   } else {
+!     $console = "/dev/con";
+!   }
+! }
+! 
+! $IN = IN;
+! open(IN, "<$console") || open(IN,  "<&STDIN"); # so we don't dingle stdin
+! 
+! $OUT = OUT;
+  open(OUT,">$console") || open(OUT, ">&STDERR")
+!   || open(OUT, ">&STDOUT");	# so we don't dongle stdout
+  select(OUT);
+  $| = 1;				# for DB::OUT
+  select(STDOUT);
++ 
+  $| = 1;				# for real STDOUT
+  $sub = '';
+  
+  $header =~ s/.Header: ([^,]+),v(\s+\S+\s+\S+).*$/$1$2/;
+  print OUT "\nLoading DB routines from $header\n";
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/Shell.pm ./lib/Shell.pm
+*** ../perl5os2.patch/perl5.001m.andy/lib/Shell.pm	Tue Oct 18 09:34:58 1994
+--- ./lib/Shell.pm	Thu Sep 28 00:00:26 1995
+***************
+*** 1,5 ****
+--- 1,7 ----
+  package Shell;
+  
++ use Config;
++ 
+  sub import {
+      my $self = shift;
+      my ($callpack, $callfile, $callline) = caller;
+***************
+*** 20,27 ****
+      $cmd =~ s/^.*:://;
+      eval qq {
+  	sub $AUTOLOAD {
+! 	    if (\@_ < 2) {
+! 		`$cmd \@_`;
+  	    }
+  	    else {
+  		open(SUBPROC, "-|")
+--- 22,57 ----
+      $cmd =~ s/^.*:://;
+      eval qq {
+  	sub $AUTOLOAD {
+! 	    if (\@_ < 1) {
+! 		`$cmd`;
+! 	    }
+! 	    elsif (\$Config{'archname'} eq 'os2') {
+! 		local(\*SAVEOUT, \*READ, \*WRITE);
+! 
+! 		open SAVEOUT, '>&STDOUT' or die;
+! 		pipe READ, WRITE or die;
+! 		open STDOUT, '>&WRITE' or die;
+! 		close WRITE;
+! 
+! 		my \$pid = system(1, \$cmd, \@_);
+! 		die "Can't execute $cmd: \$!\n" if \$pid < 0;
+! 
+! 		open STDOUT, '>&SAVEOUT' or die;
+! 		close SAVEOUT;
+! 
+! 		if (wantarray) {
+! 		    my \@ret = <READ>;
+! 		    close READ;
+! 		    waitpid \$pid, 0;
+! 		    \@ret;
+! 		}
+! 		else {
+! 		    local(\$/) = undef;
+! 		    my \$ret = <READ>;
+! 		    close READ;
+! 		    waitpid \$pid, 0;
+! 		    \$ret;
+! 		}
+  	    }
+  	    else {
+  		open(SUBPROC, "-|")
+diff -cr ..\perl5os2.patch\perl5.001m.andy/lib/Test/Harness.pm ./lib/Test/Harness.pm
+*** ../perl5os2.patch/perl5.001m.andy/lib/Test/Harness.pm	Tue Oct 18 09:38:34 1994
+--- ./lib/Test/Harness.pm	Thu Sep 28 01:06:36 1995
+***************
+*** 2,7 ****
+--- 2,14 ----
+  
+  use Exporter;
+  use Benchmark;
++ use Config;
++ 
++ $Is_OS2 = $Config{'osname'} =~ m|^os/?2$|i ;
++ 
++ $ENV{EMXSHELL} = 'sh' if $Is_OS2; # to run commands
++ $path_s = $Is_OS2 ? ';' : ':' ;
++ 
+  @ISA=(Exporter);
+  @EXPORT= qw(&runtests &test_lib);
+  @EXPORT_OK= qw($verbose $switches);
+***************
+*** 16,22 ****
+      my $bad = 0;
+      my $good = 0;
+      my $total = @tests;
+!     local($ENV{'PERL5LIB'}) = join(':', @INC); # pass -I flags to children
+  
+      my $t_start = new Benchmark;
+      while ($test = shift(@tests)) {
+--- 23,29 ----
+      my $bad = 0;
+      my $good = 0;
+      my $total = @tests;
+!     local($ENV{'PERL5LIB'}) = join($path_s, @INC); # pass -I flags to children
+  
+      my $t_start = new Benchmark;
+      while ($test = shift(@tests)) {
